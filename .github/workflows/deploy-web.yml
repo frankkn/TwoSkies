@@ -1,0 +1,41 @@
+name: Deploy Web
+
+on:
+  push:
+    tags:
+      - 'v*' # 與 APK 發版同步：同一個 tag 觸發兩條 workflow
+  workflow_dispatch: {} # 允許在 Actions 頁面手動觸發（web 有急修但不想發 APK 版時）
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Firebase web config 是公開值（隨 JS bundle 出貨），防線在 Security Rules
+      - name: Build web
+        run: npm run build
+        env:
+          VITE_FIREBASE_API_KEY: AIzaSyDX3jLmu1CwhpFoBX0XSPOiqNwKjhgcm6c
+          VITE_FIREBASE_AUTH_DOMAIN: twoskies.firebaseapp.com
+          VITE_FIREBASE_PROJECT_ID: twoskies
+          VITE_FIREBASE_APP_ID: 1:698183384173:web:ad32a27bb8fbbce53d1364
+
+      - name: Deploy to Firebase Hosting
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_TWOSKIES }}
+          projectId: twoskies
+          channelId: live # 部署到正式網址（非預覽頻道）
