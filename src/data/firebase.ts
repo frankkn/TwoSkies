@@ -243,7 +243,14 @@ export class FirebaseProvider implements DataProvider {
     batch.delete(doc(db, 'invites', s.inviteCode))
     batch.delete(doc(db, 'pairs', s.pairId))
     batch.update(doc(db, 'users', uid), { pairId: null })
-    await batch.commit()
+    try {
+      await batch.commit()
+    } catch (e) {
+      // 取消沒成立（例如對方恰好同時兌換成功）——旗標必須復位，
+      // 否則之後對方真的解除時會誤入 solo 而非「配對已結束」
+      this.selfInitiated = false
+      throw e
+    }
   }
 
   async previewInvite(code: string): Promise<InvitePreview | null> {
@@ -286,7 +293,12 @@ export class FirebaseProvider implements DataProvider {
     if (s.phase !== 'paired') return
     this.selfInitiated = true
     // 關鍵動作：刪 pair，單筆原子，即刻生效
-    await deleteDoc(doc(db, 'pairs', s.pairId))
+    try {
+      await deleteDoc(doc(db, 'pairs', s.pairId))
+    } catch (e) {
+      this.selfInitiated = false // 解除沒成立，旗標復位（同 cancelInvite）
+      throw e
+    }
     // 後續清理：孤兒 checkins 的 ID 可確定性算出（昨天/今天 × 兩人 tz × 兩人 uid）；
     // 中途斷線由 TTL 兜底
     try {
