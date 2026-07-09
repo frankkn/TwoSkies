@@ -212,7 +212,9 @@ export function ForecastBlock({ bundle, lat, lng, density = 'cozy' }: Props) {
     >
       {nudges.length > 0 && (
         <>
-          <p className={`shrink-0 leading-relaxed opacity-90 ${cozy ? 'text-sm' : 'text-xs'}`}>
+          {/* pr-48 讓叮嚀永遠伸不進右上角的溫度文字區（含冬季負溫的更寬字串）——
+              卡片上移後兩者可能同高，玻璃可以疊、文字不行 */}
+          <p className={`shrink-0 pr-48 leading-relaxed opacity-90 ${cozy ? 'text-sm' : 'text-xs'}`}>
             {cozy ? nudges.join('。') : nudges[0]}
           </p>
           <hr className="shrink-0 border-white/20" />

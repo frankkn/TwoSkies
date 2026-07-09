@@ -67,19 +67,24 @@ export function SkyPane({ profile, weather, showLocalTime, ritual, onSettingsCli
             </div>
             {ritual}
           </div>
-          <div className="flex shrink-0 flex-col items-center">
-            {/* 隱形 ° 當左側配重：置中以數字為視覺中心，度符號不把數字擠偏 */}
-            <p className="text-5xl font-extralight sm:text-6xl">
-              {bundle ? <><span className="invisible">°</span>{bundle.now.temperature}°</> : '–'}
-            </p>
-            {bundle && (
-              <div className="mt-1 flex flex-col items-center">
-                <p className="text-sm opacity-75">
-                  最高{bundle.today.high}° 最低{bundle.today.low}°
-                </p>
-                <p className="text-sm opacity-75">{conditionLabel(bundle.now)}</p>
-              </div>
-            )}
+          {/* h-0 讓溫度欄不貢獻 header 高度——卡片位置只由左欄文字流決定，
+              卡片的磨砂玻璃可滑到溫度文字底下（文字碰撞由卡片端的 padding 防守）；
+              relative z-10 讓溫度文字浮在玻璃上、而不是被玻璃磨糊 */}
+          <div className="relative z-10 h-0 shrink-0 overflow-visible">
+            <div className="flex flex-col items-center">
+              {/* 隱形 ° 當左側配重：置中以數字為視覺中心，度符號不把數字擠偏 */}
+              <p className="text-5xl font-extralight sm:text-6xl">
+                {bundle ? <><span className="invisible">°</span>{bundle.now.temperature}°</> : '–'}
+              </p>
+              {bundle && (
+                <div className="mt-1 flex flex-col items-center">
+                  <p className="text-sm opacity-75">
+                    最高{bundle.today.high}° 最低{bundle.today.low}°
+                  </p>
+                  <p className="text-sm opacity-75">{conditionLabel(bundle.now)}</p>
+                </div>
+              )}
+            </div>
           </div>
         </header>
 
