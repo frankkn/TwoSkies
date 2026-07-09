@@ -125,9 +125,11 @@ export function ForecastBlock({ bundle, lat, lng }: Props) {
     const el = blockRef.current
     if (!el) return
     const observer = new ResizeObserver(() => {
-      const next = Math.max(4, Math.floor(el.clientWidth / HOUR_COL_PX))
+      // clientWidth 含 padding；扣掉卡片的 p-4（16px × 2）才是內容寬
+      const inner = el.clientWidth - 32
+      const next = Math.max(4, Math.floor(inner / HOUR_COL_PX))
       setCols(next)
-      setColPx(el.clientWidth / next)
+      setColPx(inner / next)
     })
     observer.observe(el)
     return () => observer.disconnect()
@@ -173,7 +175,11 @@ export function ForecastBlock({ bundle, lat, lng }: Props) {
   const pos = (t: number) => Math.min(100, Math.max(0, ((t - weekMin) / weekRange) * 100))
 
   return (
-    <div ref={blockRef} className="flex h-full min-h-0 w-full max-w-[40rem] flex-col gap-3">
+    // 磨砂卡片（iPhone 天氣的做法）：天空再淺，預報都讀得清楚；透明度低，天空仍透得出來
+    <div
+      ref={blockRef}
+      className="flex h-full min-h-0 w-full max-w-[40rem] flex-col gap-3 rounded-2xl bg-slate-900/20 p-4 backdrop-blur-sm"
+    >
       <HourStrip hours={bundle.hourly} cols={cols} nowLabel />
 
       <hr className="shrink-0 border-white/20" />
