@@ -1,0 +1,23 @@
+@import "tailwindcss";
+
+/* 動畫要慢、要安靜（見 CLAUDE.md UI 節） */
+
+@keyframes drift {
+  from { transform: translateX(0); }
+  to   { transform: translateX(480%); }
+}
+
+@keyframes fall {
+  from { transform: translateY(0); }
+  to   { transform: translateY(62vh); }
+}
+
+@keyframes snowfall {
+  from { transform: translate(0, 0); }
+  to   { transform: translate(28px, 62vh); }
+}
+
+@keyframes twinkle {
+  0%, 100% { opacity: 0.25; }
+  50%      { opacity: 0.9; }
+}
