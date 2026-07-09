@@ -75,18 +75,19 @@ function Stars({ faint }: { faint?: boolean }) {
   )
 }
 
+// 太陽/月亮掛在頂部中央、微微探頭——左邊的名字和右邊的溫度都不會被壓到
 function Sun() {
   return (
     <>
-      <div className="absolute -top-8 right-8 h-44 w-44 rounded-full bg-amber-100/70 blur-2xl" />
-      <div className="absolute top-6 right-16 h-16 w-16 rounded-full bg-amber-50/90 blur-[2px]" />
+      <div className="absolute -top-16 left-1/2 h-44 w-44 -translate-x-1/2 rounded-full bg-amber-100/70 blur-2xl" />
+      <div className="absolute -top-6 left-1/2 h-16 w-16 -translate-x-1/2 rounded-full bg-amber-50/90 blur-[2px]" />
     </>
   )
 }
 
 function Moon() {
   return (
-    <div className="absolute top-8 right-14 h-12 w-12 rounded-full bg-slate-100/90 shadow-[0_0_28px_rgba(255,255,255,0.35)]" />
+    <div className="absolute top-4 left-1/2 h-12 w-12 -translate-x-1/2 rounded-full bg-slate-100/90 shadow-[0_0_28px_rgba(255,255,255,0.35)]" />
   )
 }
 
