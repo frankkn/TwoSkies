@@ -11,23 +11,34 @@ interface Props {
   /** 對方今天來看過：顯示溫柔的標記；null 就什麼都沒有——留白是誠實 */
   visitedBy?: string | null
   visitorIsDay?: boolean
+  /** 點自己的名字/城市打開設定 */
+  onProfileClick?: () => void
   children?: ReactNode
 }
 
-export function SkyPane({ profile, weather, showLocalTime, visitedBy, visitorIsDay, children }: Props) {
+export function SkyPane({ profile, weather, showLocalTime, visitedBy, visitorIsDay, onProfileClick, children }: Props) {
   const now = useNow(profile.tz)
+  const headerInfo = (
+    <>
+      <h2 className="text-lg font-medium">{profile.nickname}</h2>
+      <p className="text-sm opacity-75">
+        {profile.city}
+        {showLocalTime && ` · ${now}`}
+      </p>
+    </>
+  )
   return (
     <section className="relative flex-1 overflow-hidden">
       <SkyScene weather={weather} />
       <div className="absolute inset-0 flex flex-col justify-between p-5 text-white [text-shadow:0_1px_10px_rgba(0,0,0,0.3)] sm:p-8">
         <header className="flex items-start justify-between">
-          <div>
-            <h2 className="text-lg font-medium">{profile.nickname}</h2>
-            <p className="text-sm opacity-75">
-              {profile.city}
-              {showLocalTime && ` · ${now}`}
-            </p>
-          </div>
+          {onProfileClick ? (
+            <button type="button" className="text-left" onClick={onProfileClick}>
+              {headerInfo}
+            </button>
+          ) : (
+            <div>{headerInfo}</div>
+          )}
           <p className="text-4xl font-extralight">
             {weather.status === 'ok' ? `${weather.weather.temperature}°` : '–'}
           </p>

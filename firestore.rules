@@ -67,7 +67,9 @@ service cloud.firestore {
     }
 
     match /pairs/{pairId} {
-      allow get: if signedIn() && request.auth.uid in resource.data.members;
+      // resource == null：允許監聽尚不存在/已刪除的 pair（回「不存在」不洩內容）——
+      // 否則本地寫入先行的 listen 與解除配對的刪除事件都會讓 listener 帶錯誤死掉
+      allow get: if signedIn() && (resource == null || request.auth.uid in resource.data.members);
       allow list: if false;
 
       // 建立：members == [自己]，且同一 batch 把自己的 users.pairId 從無變成此 pair
