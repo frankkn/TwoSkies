@@ -45,8 +45,9 @@ export function SkyPane({ profile, weather, showLocalTime, visitedBy, onSettings
             )}
           </div>
           <div className="flex shrink-0 flex-col items-center">
+            {/* 隱形 ° 當左側配重：置中以數字為視覺中心，度符號不把數字擠偏 */}
             <p className="text-5xl font-extralight sm:text-6xl">
-              {bundle ? `${bundle.now.temperature}°` : '–'}
+              {bundle ? <><span className="invisible">°</span>{bundle.now.temperature}°</> : '–'}
             </p>
             {bundle && (
               <div className="mt-1 flex flex-col items-center">
