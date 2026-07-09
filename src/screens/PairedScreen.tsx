@@ -113,20 +113,21 @@ export function PairedScreen({ me, partner, pairId }: Props) {
     <main className="flex h-dvh flex-col">
       {viewMode === 'split' ? (
         <>
-          {/* 同框＝半屏高度：預報用緊湊密度，滿版寬鬆留給 focus/solo 的全螢幕單片 */}
+          {/* 同框＝半屏高度：預報用緊湊密度，滿版寬鬆留給 focus/solo 的全螢幕單片。
+              齒輪掛上片（對方）的名字旁——同框時整個畫面的「右上角」在對方那片 */}
           <SkyPane
             profile={partner}
             weather={partnerWeather}
             showLocalTime
             safeArea="top"
             ritual={checkin}
+            onSettingsClick={() => setShowSettings(true)}
             forecastDensity="compact"
           />
           <SkyPane
             profile={me}
             weather={myWeather}
             ritual={visitedMark}
-            onSettingsClick={() => setShowSettings(true)}
             safeArea="bottom"
             forecastDensity="compact"
           />
