@@ -75,28 +75,17 @@ function weekdayLabel(date: string, index: number): string {
   )
 }
 
-/** 逐時橫列：格數依可用寬度動態分配（每格約 64px），按住拖曳看全部，
+/** 逐時橫列：格數由外層依可用寬度算好傳入（每格約 64px），按住拖曳看全部，
  *  右緣內容淡出提示可捲 */
 const HOUR_COL_PX = 64
 
-function HourStrip({ hours, nowLabel }: { hours: HourPoint[]; nowLabel?: boolean }) {
+function HourStrip({ hours, cols, nowLabel }: { hours: HourPoint[]; cols: number; nowLabel?: boolean }) {
   const ref = useDragScroll('x')
-  const [cols, setCols] = useState(6)
-
-  useEffect(() => {
-    const el = ref.current
-    if (!el) return
-    const observer = new ResizeObserver(() => {
-      setCols(Math.max(4, Math.floor(el.clientWidth / HOUR_COL_PX)))
-    })
-    observer.observe(el)
-    return () => observer.disconnect()
-  }, [ref])
 
   return (
     <div
       ref={ref}
-      className="flex cursor-grab snap-x select-none overflow-x-auto pb-0.5 active:cursor-grabbing [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [mask-image:linear-gradient(to_left,transparent,black_2.5rem)]"
+      className="flex shrink-0 cursor-grab snap-x select-none overflow-x-auto pb-0.5 active:cursor-grabbing [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [mask-image:linear-gradient(to_left,transparent,black_2.5rem)]"
     >
       {hours.map((h, i) => (
         <div
@@ -123,9 +112,37 @@ interface Props {
 /** 常駐在天空上的預報：只有溫度和雨，直接顯示、不需點擊。
  *  區塊限寬靠左——寬螢幕不撐滿，右半邊留給天空 */
 export function ForecastBlock({ bundle, lat, lng }: Props) {
+  const blockRef = useRef<HTMLDivElement>(null)
   const dailyRef = useDragScroll('y')
   const [expanded, setExpanded] = useState<string | null>(null)
   const [dayHours, setDayHours] = useState<Record<string, HourPoint[] | 'loading'>>({})
+  const [cols, setCols] = useState(6)
+  const [colPx, setColPx] = useState(HOUR_COL_PX)
+  const [listOverflows, setListOverflows] = useState(false)
+
+  // 區塊寬度 → 動態格數與欄寬（逐時列與七天列首尾格共用同一把尺）
+  useEffect(() => {
+    const el = blockRef.current
+    if (!el) return
+    const observer = new ResizeObserver(() => {
+      const next = Math.max(4, Math.floor(el.clientWidth / HOUR_COL_PX))
+      setCols(next)
+      setColPx(el.clientWidth / next)
+    })
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [])
+
+  // 底緣淡出遮罩只在七天列真的有捲動空間時出現
+  useEffect(() => {
+    const el = dailyRef.current
+    if (!el) return
+    const check = () => setListOverflows(el.scrollHeight > el.clientHeight + 1)
+    check()
+    const observer = new ResizeObserver(check)
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [dailyRef, expanded, dayHours])
 
   async function toggleDay(date: string) {
     if (expanded === date) {
@@ -156,16 +173,17 @@ export function ForecastBlock({ bundle, lat, lng }: Props) {
   const pos = (t: number) => Math.min(100, Math.max(0, ((t - weekMin) / weekRange) * 100))
 
   return (
-    <div className="flex w-full max-w-[40rem] flex-col gap-3">
-      <HourStrip hours={bundle.hourly} nowLabel />
+    <div ref={blockRef} className="flex h-full min-h-0 w-full max-w-[40rem] flex-col gap-3">
+      <HourStrip hours={bundle.hourly} cols={cols} nowLabel />
 
-      <hr className="border-white/20" />
+      <hr className="shrink-0 border-white/20" />
 
-      {/* 七天列：可視高度約 4 行，其餘往下拖曳看；底緣內容淡出提示 */}
+      {/* 七天列：吃滿可用高度，放得下就全展開；放不下往下拖曳看（可捲時底緣淡出）。
+          極矮視窗至少保底兩行 */}
       <ul
         ref={dailyRef}
-        className={`flex cursor-grab select-none flex-col gap-1.5 overflow-y-auto active:cursor-grabbing [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [mask-image:linear-gradient(to_top,transparent,black_1.5rem)] ${
-          expanded ? 'max-h-48' : 'max-h-24'
+        className={`flex min-h-14 flex-1 cursor-grab select-none flex-col gap-1.5 overflow-y-auto active:cursor-grabbing [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${
+          listOverflows ? '[mask-image:linear-gradient(to_top,transparent,black_1.5rem)]' : ''
         }`}
       >
         {bundle.daily.map((d, i) => {
@@ -184,7 +202,10 @@ export function ForecastBlock({ bundle, lat, lng }: Props) {
                   setTimeout(() => row.scrollIntoView({ block: 'nearest', behavior: 'smooth' }), 80)
                 }}
               >
-                <span className="w-9 text-left opacity-80">{weekdayLabel(d.date, i)}</span>
+                {/* 首尾格採逐時欄寬置中：「今天」對齊上方「現在」、最高溫對齊最右欄的溫度 */}
+                <span style={{ width: colPx }} className="shrink-0 text-center opacity-80">
+                  {weekdayLabel(d.date, i)}
+                </span>
                 <WeatherIcon kind={d.kind} size={17} />
                 <span className="w-9 text-center text-xs opacity-60">{d.precipProb}%</span>
                 <span className="w-7 text-right opacity-55">{d.low}°</span>
@@ -208,14 +229,16 @@ export function ForecastBlock({ bundle, lat, lng }: Props) {
                     />
                   )}
                 </span>
-                <span className="w-8 text-right">{d.high}°</span>
+                <span style={{ width: colPx }} className="shrink-0 text-center">
+                  {d.high}°
+                </span>
               </button>
               {expanded === d.date && (
                 <div className="mt-1.5 mb-1">
                   {detail === 'loading' || !detail ? (
                     <p className="py-2 text-xs opacity-50">…</p>
                   ) : (
-                    <HourStrip hours={detail} />
+                    <HourStrip hours={detail} cols={cols} />
                   )}
                 </div>
               )}
