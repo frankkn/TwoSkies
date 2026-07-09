@@ -137,6 +137,9 @@ export class FirebaseProvider implements DataProvider {
     this.unsubPair = onSnapshot(
       doc(db, 'pairs', pairId),
       snap => {
+        // 離線且快取沒有這份文件時，listener 會發出 fromCache 的「不存在」——
+        // 那不是解除訊號，誤信會排入 pairId=null 的破壞性寫入。只信 server 的刪除事件
+        if (!snap.exists() && snap.metadata.fromCache) return
         this.onPairDoc(pairId, snap.exists() ? snap.data() : null)
       },
       err => console.warn('[twoskies] pair listener error:', err.code, err.message),
