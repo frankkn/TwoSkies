@@ -75,9 +75,24 @@ function weekdayLabel(date: string, index: number): string {
   )
 }
 
-/** 逐時橫列：6 格可見、按住拖曳看全部，右緣內容淡出提示可捲 */
+/** 逐時橫列：格數依可用寬度動態分配（每格約 64px），按住拖曳看全部，
+ *  右緣內容淡出提示可捲 */
+const HOUR_COL_PX = 64
+
 function HourStrip({ hours, nowLabel }: { hours: HourPoint[]; nowLabel?: boolean }) {
   const ref = useDragScroll('x')
+  const [cols, setCols] = useState(6)
+
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const observer = new ResizeObserver(() => {
+      setCols(Math.max(4, Math.floor(el.clientWidth / HOUR_COL_PX)))
+    })
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [ref])
+
   return (
     <div
       ref={ref}
@@ -86,7 +101,8 @@ function HourStrip({ hours, nowLabel }: { hours: HourPoint[]; nowLabel?: boolean
       {hours.map((h, i) => (
         <div
           key={`${h.hour}-${i}`}
-          className="flex shrink-0 basis-1/6 snap-start flex-col items-center gap-1.5 text-xs leading-none"
+          className="flex shrink-0 snap-start flex-col items-center gap-1.5 text-xs leading-none"
+          style={{ flexBasis: `${100 / cols}%` }}
         >
           <span className="opacity-60">{nowLabel && i === 0 ? '現在' : `${h.hour}時`}</span>
           <WeatherIcon kind={h.kind} isDay={h.isDay} size={18} />
@@ -134,7 +150,7 @@ export function ForecastBlock({ bundle, lat, lng }: Props) {
   }
 
   return (
-    <div className="flex w-full max-w-sm flex-col gap-3">
+    <div className="flex w-full max-w-[40rem] flex-col gap-3">
       <HourStrip hours={bundle.hourly} nowLabel />
 
       <hr className="border-white/20" />
@@ -150,10 +166,10 @@ export function ForecastBlock({ bundle, lat, lng }: Props) {
           const detail = dayHours[d.date]
           return (
             <li key={d.date}>
-              {/* 欄位緊鄰：星期・圖示・雨%・低—高溫，不留中間空白 */}
+              {/* 四欄均分佔滿區塊寬度，左右邊緣與上方逐時列切齊 */}
               <button
                 type="button"
-                className="flex items-center gap-3 text-sm leading-none"
+                className="flex w-full items-center justify-between text-sm leading-none"
                 onClick={e => {
                   void toggleDay(d.date)
                   const row = e.currentTarget
@@ -162,8 +178,8 @@ export function ForecastBlock({ bundle, lat, lng }: Props) {
               >
                 <span className="w-9 text-left opacity-80">{weekdayLabel(d.date, i)}</span>
                 <WeatherIcon kind={d.kind} size={17} />
-                <span className="w-10 text-left text-xs opacity-60">{d.precipProb}%</span>
-                <span>
+                <span className="w-10 text-center text-xs opacity-60">{d.precipProb}%</span>
+                <span className="w-20 text-right">
                   <span className="opacity-55">{d.low}°</span>
                   <span className="mx-1 opacity-40">—</span>
                   {d.high}°
