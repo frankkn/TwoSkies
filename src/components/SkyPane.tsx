@@ -1,7 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import type { Profile, WeatherStatus } from '../types'
 import { localTimeIn } from '../lib/time'
-import { ForecastPanel } from './ForecastPanel'
+import { ForecastBlock } from './ForecastPanel'
 import { SkyScene } from './SkyScene'
 
 interface Props {
@@ -11,25 +11,20 @@ interface Props {
   showLocalTime?: boolean
   /** 對方今天來看過：淺淺一句話；null 就什麼都沒有——留白是誠實 */
   visitedBy?: string | null
-  /** 有值就在右上顯示低調的設定入口（⋯） */
+  /** 有值就在左上資訊區下方顯示齒輪設定入口 */
   onSettingsClick?: () => void
   children?: ReactNode
 }
 
 export function SkyPane({ profile, weather, showLocalTime, visitedBy, onSettingsClick, children }: Props) {
   const now = useNow(profile.tz)
-  const [showForecast, setShowForecast] = useState(false)
   const bundle = weather.status === 'ok' ? weather.weather : null
 
   return (
     <section className="relative flex-1 overflow-hidden">
       <SkyScene sky={bundle?.now ?? null} error={weather.status === 'error'} />
-      {/* 輕點天空展開預報；標頭與底部的互動不受影響 */}
-      <div
-        className="absolute inset-0 flex flex-col justify-between p-5 text-white [text-shadow:0_1px_10px_rgba(0,0,0,0.35)] sm:p-8"
-        onClick={() => bundle && setShowForecast(v => !v)}
-      >
-        <header className="flex items-start justify-between" onClick={e => e.stopPropagation()}>
+      <div className="absolute inset-0 flex flex-col p-5 text-white [text-shadow:0_1px_10px_rgba(0,0,0,0.35)] sm:p-8">
+        <header className="flex items-start justify-between">
           <div className="flex flex-col items-start gap-1">
             <div>
               <h2 className="text-lg font-medium">{profile.nickname}</h2>
@@ -37,12 +32,6 @@ export function SkyPane({ profile, weather, showLocalTime, visitedBy, onSettings
                 {profile.city}
                 {showLocalTime && ` · ${now}`}
               </p>
-              {bundle && (
-                <p className="text-xs opacity-60">
-                  H{bundle.today.high}° L{bundle.today.low}°
-                  {bundle.today.precipProb > 0 && ` ・雨 ${bundle.today.precipProb}%`}
-                </p>
-              )}
             </div>
             {onSettingsClick && (
               <button
@@ -57,7 +46,12 @@ export function SkyPane({ profile, weather, showLocalTime, visitedBy, onSettings
           </div>
           <p className="text-4xl font-extralight">{bundle ? `${bundle.now.temperature}°` : '–'}</p>
         </header>
-        <footer className="flex items-end justify-between gap-4" onClick={e => e.stopPropagation()}>
+
+        <div className="flex-1" />
+
+        {bundle && <ForecastBlock bundle={bundle} />}
+
+        <footer className="mt-3 flex items-end justify-between gap-4">
           {visitedBy ? (
             <p className="text-sm text-white/60">{visitedBy}來看過你的天空了</p>
           ) : (
@@ -66,7 +60,6 @@ export function SkyPane({ profile, weather, showLocalTime, visitedBy, onSettings
           {children}
         </footer>
       </div>
-      {showForecast && bundle && <ForecastPanel bundle={bundle} onClose={() => setShowForecast(false)} />}
     </section>
   )
 }

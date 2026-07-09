@@ -9,6 +9,8 @@ export interface WeatherNow {
 export interface HourPoint {
   /** 當地時間的小時（0-23）——對方那片顯示的是對方的時間 */
   hour: number
+  kind: WeatherKind
+  isDay: boolean
   temperature: number
   precipProb: number
 }

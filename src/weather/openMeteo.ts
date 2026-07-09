@@ -16,7 +16,7 @@ export async function fetchWeather(lat: number, lng: number): Promise<WeatherBun
     `https://api.open-meteo.com/v1/forecast` +
     `?latitude=${lat}&longitude=${lng}` +
     `&current=temperature_2m,weather_code,is_day` +
-    `&hourly=temperature_2m,precipitation_probability&forecast_hours=12` +
+    `&hourly=temperature_2m,precipitation_probability,weather_code,is_day&forecast_hours=12` +
     `&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&forecast_days=7` +
     `&timezone=auto`
   const res = await fetch(url)
@@ -32,6 +32,8 @@ export async function fetchWeather(lat: number, lng: number): Promise<WeatherBun
 
   const hourly: HourPoint[] = ((json.hourly?.time ?? []) as string[]).map((t, i) => ({
     hour: Number(t.slice(11, 13)),
+    kind: weatherKindFromWmo(json.hourly.weather_code?.[i] ?? 0),
+    isDay: (json.hourly.is_day?.[i] ?? 1) === 1,
     temperature: Math.round(json.hourly.temperature_2m[i]),
     precipProb: Math.round(json.hourly.precipitation_probability?.[i] ?? 0),
   }))
