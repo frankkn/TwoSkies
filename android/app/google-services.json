@@ -1,0 +1,55 @@
+{
+  "project_info": {
+    "project_number": "698183384173",
+    "project_id": "twoskies",
+    "storage_bucket": "twoskies.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:698183384173:android:0d8e42ecefe923803d1364",
+        "android_client_info": {
+          "package_name": "com.twoskies.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "698183384173-3gssci1dtukn446269kff9o0coiaima1.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.twoskies.app",
+            "certificate_hash": "f55a276385a0cdc1de621973a1527729d8b032d7"
+          }
+        },
+        {
+          "client_id": "698183384173-o4qs6bntig9b3uj6ubbr2fc4saa6v4ou.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.twoskies.app",
+            "certificate_hash": "5a07f8f9ce05acd1cf2782d73f2a9b1937175867"
+          }
+        },
+        {
+          "client_id": "698183384173-2pin6verrvcek6bmfth110oh0iqt96tc.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDRWkTjO7N1Vb0ADrmy2TBpA4qVQp3LEIk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "698183384173-2pin6verrvcek6bmfth110oh0iqt96tc.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

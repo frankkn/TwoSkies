@@ -1,6 +1,8 @@
+import { Capacitor } from '@capacitor/core'
 import {
   GoogleAuthProvider,
   onAuthStateChanged,
+  signInWithCredential,
   signInWithPopup,
   signOut as firebaseSignOut,
   type User,
@@ -196,11 +198,26 @@ export class FirebaseProvider implements DataProvider {
   // --- 動作 ---
 
   async signIn() {
+    // Android 殼的 WebView 被 Google 封鎖 OAuth popup：改走原生 Google Sign-In，
+    // 拿 idToken 讓 JS SDK 登入——之後的訂閱鏈與資料層跟網頁版走同一條路
+    if (Capacitor.isNativePlatform()) {
+      const { FirebaseAuthentication } = await import('@capacitor-firebase/authentication')
+      const result = await FirebaseAuthentication.signInWithGoogle()
+      const idToken = result.credential?.idToken
+      if (!idToken) throw new Error('native google sign-in returned no idToken')
+      await signInWithCredential(auth, GoogleAuthProvider.credential(idToken))
+      return
+    }
     // signInWithRedirect 在 Safari/儲存分區下靜默失敗，一律 popup（見 CLAUDE.md）
     await signInWithPopup(auth, new GoogleAuthProvider())
   }
 
   async signOut() {
+    // 原生層也要登出，下次登入才會重新出現帳號選擇
+    if (Capacitor.isNativePlatform()) {
+      const { FirebaseAuthentication } = await import('@capacitor-firebase/authentication')
+      await FirebaseAuthentication.signOut()
+    }
     await firebaseSignOut(auth)
   }
 

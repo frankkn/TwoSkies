@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">兩片天空</string>
+    <string name="title_activity_main">兩片天空</string>
+    <string name="package_name">com.twoskies.app</string>
+    <string name="custom_url_scheme">com.twoskies.app</string>
+</resources>

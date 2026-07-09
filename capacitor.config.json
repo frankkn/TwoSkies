@@ -1,0 +1,11 @@
+{
+  "appId": "com.twoskies.app",
+  "appName": "兩片天空",
+  "webDir": "dist",
+  "plugins": {
+    "FirebaseAuthentication": {
+      "skipNativeAuth": false,
+      "providers": ["google.com"]
+    }
+  }
+}
