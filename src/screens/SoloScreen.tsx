@@ -18,19 +18,25 @@ export function SoloScreen({ me }: { me: Profile }) {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [linkInvite, setLinkInvite] = useState<{ code: string; nickname: string } | null>(null)
+  // 邀請連結流程的回饋直接顯示在天空上——收進設定裡的 error 這時使用者看不到
+  const [hashNotice, setHashNotice] = useState('')
 
   // 邀請連結（#invite=code）：先讓 B 看到「誰邀請你」再決定
   useEffect(() => {
     const fromHash = inviteCodeFromHash(location.hash)
     if (!fromHash) return
-    provider.previewInvite(fromHash).then(preview => {
-      if (preview) {
-        setLinkInvite({ code: fromHash, nickname: preview.inviterNickname })
-      } else {
-        setError('這個邀請碼已被使用或已過期')
-        history.replaceState(null, '', location.pathname)
-      }
-    })
+    provider
+      .previewInvite(fromHash)
+      .then(preview => {
+        if (preview) {
+          setLinkInvite({ code: fromHash, nickname: preview.inviterNickname })
+        } else {
+          setHashNotice('這個邀請碼已被使用或已過期')
+          history.replaceState(null, '', location.pathname)
+        }
+      })
+      // 網路錯不動 hash——重新整理就會再試一次
+      .catch(() => setHashNotice('暫時連不上，稍後重新整理再試'))
   }, [])
 
   async function redeem(target: string) {
@@ -93,6 +99,16 @@ export function SoloScreen({ me }: { me: Profile }) {
   return (
     <main className="relative flex h-dvh flex-col">
       <SkyPane profile={me} weather={weather} onSettingsClick={() => setShowSettings(true)} />
+
+      {hashNotice && (
+        <button
+          type="button"
+          className="absolute inset-x-0 bottom-20 z-10 mx-auto w-fit rounded-full bg-slate-900/40 px-4 py-2 text-sm text-white/75 backdrop-blur-md"
+          onClick={() => setHashNotice('')}
+        >
+          {hashNotice}
+        </button>
+      )}
 
       {linkInvite && (
         <div className="absolute inset-0 z-10 flex items-center justify-center bg-slate-950/60 backdrop-blur-sm">
