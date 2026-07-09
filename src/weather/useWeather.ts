@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import type { WeatherStatus } from '../types'
-import { fetchCurrentWeather } from './openMeteo'
+import { fetchWeather } from './openMeteo'
 
 const STALE_MS = 15 * 60 * 1000
 
@@ -16,7 +16,7 @@ export function useWeather(lat: number, lng: number): WeatherStatus {
     async function load() {
       lastFetchAt.current = Date.now()
       try {
-        const weather = await fetchCurrentWeather(lat, lng)
+        const weather = await fetchWeather(lat, lng)
         if (!cancelled) setState({ status: 'ok', weather })
       } catch {
         // 抓不到就顯示「雲層後面的天空」；已有資料時保留舊資料，不嚇人

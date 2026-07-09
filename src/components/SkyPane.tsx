@@ -1,6 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import type { Profile, WeatherStatus } from '../types'
 import { localTimeIn } from '../lib/time'
+import { ForecastPanel } from './ForecastPanel'
 import { SkyScene } from './SkyScene'
 
 interface Props {
@@ -18,6 +19,9 @@ interface Props {
 
 export function SkyPane({ profile, weather, showLocalTime, visitedBy, visitorIsDay, onProfileClick, children }: Props) {
   const now = useNow(profile.tz)
+  const [showForecast, setShowForecast] = useState(false)
+  const bundle = weather.status === 'ok' ? weather.weather : null
+
   const headerInfo = (
     <>
       <h2 className="text-lg font-medium">{profile.nickname}</h2>
@@ -25,13 +29,23 @@ export function SkyPane({ profile, weather, showLocalTime, visitedBy, visitorIsD
         {profile.city}
         {showLocalTime && ` · ${now}`}
       </p>
+      {bundle && (
+        <p className="text-xs opacity-60">
+          H{bundle.today.high}° L{bundle.today.low}°
+          {bundle.today.precipProb > 0 && ` ・雨 ${bundle.today.precipProb}%`}
+        </p>
+      )}
     </>
   )
   return (
     <section className="relative flex-1 overflow-hidden">
-      <SkyScene weather={weather} />
-      <div className="absolute inset-0 flex flex-col justify-between p-5 text-white [text-shadow:0_1px_10px_rgba(0,0,0,0.3)] sm:p-8">
-        <header className="flex items-start justify-between">
+      <SkyScene sky={bundle?.now ?? null} error={weather.status === 'error'} />
+      {/* 輕點天空展開預報；標頭與底部的互動不受影響 */}
+      <div
+        className="absolute inset-0 flex flex-col justify-between p-5 text-white [text-shadow:0_1px_10px_rgba(0,0,0,0.3)] sm:p-8"
+        onClick={() => bundle && setShowForecast(v => !v)}
+      >
+        <header className="flex items-start justify-between" onClick={e => e.stopPropagation()}>
           {onProfileClick ? (
             <button type="button" className="text-left" onClick={onProfileClick}>
               {headerInfo}
@@ -39,11 +53,9 @@ export function SkyPane({ profile, weather, showLocalTime, visitedBy, visitorIsD
           ) : (
             <div>{headerInfo}</div>
           )}
-          <p className="text-4xl font-extralight">
-            {weather.status === 'ok' ? `${weather.weather.temperature}°` : '–'}
-          </p>
+          <p className="text-4xl font-extralight">{bundle ? `${bundle.now.temperature}°` : '–'}</p>
         </header>
-        <footer className="flex items-end justify-between gap-4">
+        <footer className="flex items-end justify-between gap-4" onClick={e => e.stopPropagation()}>
           {visitedBy ? (
             <p className="flex items-center gap-2 text-sm opacity-90">
               <span aria-hidden>{visitorIsDay ? '☀️' : '🌙'}</span>
@@ -55,6 +67,7 @@ export function SkyPane({ profile, weather, showLocalTime, visitedBy, visitorIsD
           {children}
         </footer>
       </div>
+      {showForecast && bundle && <ForecastPanel bundle={bundle} onClose={() => setShowForecast(false)} />}
     </section>
   )
 }

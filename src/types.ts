@@ -1,15 +1,40 @@
 export type WeatherKind = 'clear' | 'cloudy' | 'rain' | 'snow'
 
-export interface CurrentWeather {
+export interface WeatherNow {
   kind: WeatherKind
   temperature: number
   isDay: boolean
 }
 
+export interface HourPoint {
+  /** 當地時間的小時（0-23）——對方那片顯示的是對方的時間 */
+  hour: number
+  temperature: number
+  precipProb: number
+}
+
+export interface DayPoint {
+  /** 當地日期 YYYY-MM-DD */
+  date: string
+  kind: WeatherKind
+  high: number
+  low: number
+  precipProb: number
+}
+
+export interface WeatherBundle {
+  now: WeatherNow
+  today: { high: number; low: number; precipProb: number }
+  /** 未來 12 小時（含當前小時，當地時間） */
+  hourly: HourPoint[]
+  /** 今天起 7 天 */
+  daily: DayPoint[]
+}
+
 export type WeatherStatus =
   | { status: 'loading' }
   | { status: 'error' }
-  | { status: 'ok'; weather: CurrentWeather }
+  | { status: 'ok'; weather: WeatherBundle }
 
 export interface Profile {
   uid: string

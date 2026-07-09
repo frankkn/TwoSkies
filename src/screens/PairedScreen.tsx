@@ -35,7 +35,7 @@ export function PairedScreen({ me, partner, pairId }: Props) {
         profile={me}
         weather={myWeather}
         visitedBy={partnerCame ? partner.nickname : null}
-        visitorIsDay={partnerWeather.status === 'ok' ? partnerWeather.weather.isDay : true}
+        visitorIsDay={partnerWeather.status === 'ok' ? partnerWeather.weather.now.isDay : true}
         onProfileClick={() => setShowSettings(true)}
       >
         <CheckinButton

@@ -1,4 +1,4 @@
-import type { WeatherKind, WeatherStatus } from '../types'
+import type { WeatherKind, WeatherNow } from '../types'
 
 // 確定性偽隨機：同一顆星、同一絲雨每次 render 都在同個位置，畫面才安靜
 function rand(i: number, salt: number): number {
@@ -25,13 +25,13 @@ const GRADIENTS: Record<WeatherKind, { day: string; night: string }> = {
   },
 }
 
-export function SkyScene({ weather }: { weather: WeatherStatus }) {
-  if (weather.status !== 'ok') {
+export function SkyScene({ sky, error }: { sky: WeatherNow | null; error?: boolean }) {
+  if (!sky) {
     // 「雲層後面的天空」占位：抓不到天氣時不報錯嚇人
     return (
       <div className="absolute inset-0 bg-linear-to-b from-slate-600 via-slate-500 to-slate-400">
         <Clouds tone="dim" />
-        {weather.status === 'error' && (
+        {error && (
           <p className="absolute inset-x-0 bottom-1/3 text-center text-sm text-white/50">
             雲層後面的天空
           </p>
@@ -40,7 +40,7 @@ export function SkyScene({ weather }: { weather: WeatherStatus }) {
     )
   }
 
-  const { kind, isDay } = weather.weather
+  const { kind, isDay } = sky
   return (
     <div className={`absolute inset-0 bg-linear-to-b ${GRADIENTS[kind][isDay ? 'day' : 'night']}`}>
       {!isDay && (kind === 'clear' || kind === 'cloudy') && <Stars faint={kind === 'cloudy'} />}
