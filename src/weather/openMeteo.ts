@@ -38,6 +38,12 @@ export async function fetchWeather(lat: number, lng: number): Promise<WeatherBun
     precipProb: Math.round(json.hourly.precipitation_probability?.[i] ?? 0),
   }))
 
+  // 「現在」那格顯示即時值，跟右上角的大字一致——
+  // hourly[0] 是「這個小時」的整點值，一小時內升降溫時會跟即時值差 1°
+  if (hourly[0]) {
+    hourly[0] = { ...hourly[0], temperature: now.temperature, kind: now.kind, isDay: now.isDay }
+  }
+
   const daily: DayPoint[] = ((json.daily?.time ?? []) as string[]).map((date, i) => ({
     date,
     kind: weatherKindFromWmo(json.daily.weather_code[i]),
