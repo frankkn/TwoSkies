@@ -49,12 +49,12 @@ export function SkyPane({ profile, weather, showLocalTime, visitedBy, onSettings
               {bundle ? `${bundle.now.temperature}°` : '–'}
             </p>
             {bundle && (
-              <>
-                <p className="mt-1 text-sm opacity-75">
+              <div className="mt-1 flex flex-col items-center">
+                <p className="text-sm opacity-75">
                   最高{bundle.today.high}° 最低{bundle.today.low}°
                 </p>
                 <p className="text-sm opacity-75">{conditionLabel(bundle.now)}</p>
-              </>
+              </div>
             )}
           </div>
         </header>
