@@ -78,7 +78,12 @@
   FirebaseProvider.signIn() 依 Capacitor.isNativePlatform() 分流——原生走
   @capacitor-firebase/authentication（Credential Manager）拿 idToken 餵給
   JS SDK 的 signInWithCredential，之後整條資料層與 web 同路。
-  **這個分流不可「簡化」回單一路徑**，砍掉任一邊就是砍掉一個平台的登入
+  **這個分流不可「簡化」回單一路徑**，砍掉任一邊就是砍掉一個平台的登入。
+  另外 Google 同樣封鎖「app 內嵌瀏覽器」（LINE/FB/IG 等）的 OAuth
+  （403 disallowed_useragent）：登入頁偵測到內嵌瀏覽器就把按鈕換成
+  「複製網址，用瀏覽器開啟」的提示（src/lib/inAppBrowser.ts）；
+  邀請連結帶 `?openExternalBrowser=1`——LINE 的官方參數，讓它自動改開
+  外部瀏覽器，其他環境忽略。這個參數不是雜物，不要清掉
 - 天氣：**Open-Meteo**（免費、無 API key、無註冊），客戶端以雙方的粗化座標各查一份
   即時天氣，開啟時抓取＋每 15 分鐘更新＋位置變更時立即重抓；無需任何後端轉發。
   晝夜用回應裡的 is_day 欄位，不自己算日出日落；背景分頁的 setInterval 會被

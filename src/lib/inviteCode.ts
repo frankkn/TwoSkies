@@ -7,7 +7,9 @@ export function generateInviteCode(length = 10): string {
 }
 
 export function inviteLink(code: string): string {
-  return `${location.origin}${location.pathname}#invite=${code}`
+  // openExternalBrowser=1 是 LINE 內建瀏覽器的官方逃生門：LINE 會改用外部瀏覽器開，
+  // 避開 Google 對 WebView OAuth 的封鎖（403 disallowed_useragent）；其他環境忽略此參數
+  return `${location.origin}${location.pathname}?openExternalBrowser=1#invite=${code}`
 }
 
 export function inviteCodeFromHash(hash: string): string | null {
