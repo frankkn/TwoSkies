@@ -1,0 +1,84 @@
+name: Release APK
+
+on:
+  push:
+    tags:
+      - 'v*' # 只有 push v0.1.0 這種 tag 才觸發
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: temurin
+
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('android/**/*.gradle*', 'android/gradle/wrapper/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Firebase web config 是公開值（隨 JS bundle 出貨），防線在 Security Rules
+      - name: Build web
+        run: npm run build
+        env:
+          VITE_FIREBASE_API_KEY: AIzaSyDX3jLmu1CwhpFoBX0XSPOiqNwKjhgcm6c
+          VITE_FIREBASE_AUTH_DOMAIN: twoskies.firebaseapp.com
+          VITE_FIREBASE_PROJECT_ID: twoskies
+          VITE_FIREBASE_APP_ID: 1:698183384173:web:ad32a27bb8fbbce53d1364
+
+      - name: Sync Capacitor
+        run: npx cap sync android
+
+      - name: Decode keystore
+        run: echo "${{ secrets.TWOSKIES_KEYSTORE_BASE64 }}" | base64 -d > "$RUNNER_TEMP/release.keystore"
+
+      - name: Build signed APK
+        run: |
+          export TWOSKIES_VERSION_NAME="${GITHUB_REF_NAME#v}"
+          chmod +x android/gradlew
+          cd android && ./gradlew assembleRelease --console=plain
+        env:
+          TWOSKIES_KEYSTORE_FILE: ${{ runner.temp }}/release.keystore
+          TWOSKIES_KEYSTORE_PASSWORD: ${{ secrets.TWOSKIES_KEYSTORE_PASSWORD }}
+          TWOSKIES_VERSION_CODE: ${{ github.run_number }}
+
+      - name: Rename APK
+        run: mv android/app/build/outputs/apk/release/app-release.apk app-twoskies.apk
+
+      - name: Create GitHub Release & Upload APK
+        uses: softprops/action-gh-release@v2
+        with:
+          files: app-twoskies.apk
+          generate_release_notes: false
+          body: |
+            ## 兩片天空 TwoSkies ${{ github.ref_name }}
+
+            ### 安裝方式
+            下載 `app-twoskies.apk`，在 Android 手機上安裝即可。
+            iOS 與 Web 用法見 [README](https://github.com/frankkn/TwoSkies#如何使用)。
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
