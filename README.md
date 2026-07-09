@@ -10,6 +10,21 @@
 
 🔗 Live: **https://twoskies.web.app**
 
+## How to use
+
+### Android
+1. Download [app-twoskies.apk (latest)](https://github.com/frankkn/TwoSkies/releases/latest/download/app-twoskies.apk)
+2. On your phone, allow installs from unknown sources (Settings → Security)
+3. Open the downloaded APK to install, then sign in with Google
+
+### iOS (Add to Home Screen)
+1. Open [https://twoskies.web.app](https://twoskies.web.app) in **Safari**
+2. Tap the **Share** button ↑ → choose **Add to Home Screen**
+3. Tap **Add** — a TwoSkies icon appears on your home screen and works like an app
+
+### Web
+Just open [https://twoskies.web.app](https://twoskies.web.app) in any browser.
+
 ## What is this
 
 You're standing under a clear Taipei afternoon, and on the same screen, London is raining on someone you care about.
@@ -51,6 +66,9 @@ All of it is covered by 33 emulator tests (`npm run test:rules`).
 - **Vite + React + TypeScript + Tailwind CSS v4**
 - **Firebase**: Google sign-in, Firestore (realtime sync via `onSnapshot`), Hosting, App Check — no custom backend at all
 - **Open-Meteo** for weather and city geocoding
+- **Capacitor** wraps the same React codebase into the Android APK (Google sign-in goes
+  native on Android; everything else shares the web data path); pushing a `v*` tag makes
+  GitHub Actions build, sign, and publish it to Releases
 
 ## Local development
 
