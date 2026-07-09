@@ -72,6 +72,7 @@ export function PairedScreen({ me, partner, pairId }: Props) {
         <CheckinButton
           checked={iCame}
           offline={!online}
+          partnerNickname={partner.nickname}
           onCheckin={() => provider.createCheckin(pairId, myCheckinId)}
         />
       </SkyPane>
