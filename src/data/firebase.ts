@@ -321,15 +321,22 @@ export class FirebaseProvider implements DataProvider {
   }
 
   async createCheckin(pairId: string, checkinId: string) {
+    const ref = doc(db, 'pairs', pairId, 'checkins', checkinId)
     try {
-      await setDoc(doc(db, 'pairs', pairId, 'checkins', checkinId), {
+      await setDoc(ref, {
         at: serverTimestamp(),
         expireAt: Timestamp.fromMillis(Date.now() + 48 * HOUR),
       })
     } catch (e) {
-      // 已存在（另一分頁先打了）→ rules 拒絕 update → 冪等成功；狀態以訂閱為準
       const code = (e as { code?: string }).code
-      if (code === 'permission-denied' || code === 'already-exists') return
+      if (code === 'already-exists') return
+      // permission-denied 可能是「已存在（另一分頁先打了）→ rules 拒絕 update」的冪等成功，
+      // 也可能是時鐘偏差超出 rules 的 expireAt 窗或 App Check 失敗——
+      // 查證文件真的存在才算成功，否則往上丟，不讓打卡靜默失敗
+      if (code === 'permission-denied') {
+        const exists = await getDoc(ref).then(s => s.exists()).catch(() => false)
+        if (exists) return
+      }
       throw e
     }
   }

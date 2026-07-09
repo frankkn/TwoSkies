@@ -12,6 +12,7 @@ interface Props {
 // 悲觀更新：等 provider resolve（= server ack）才由訂閱翻轉狀態；點過即安靜變化
 export function CheckinButton({ checked, offline, partnerNickname, onCheckin }: Props) {
   const [busy, setBusy] = useState(false)
+  const [failed, setFailed] = useState(false)
 
   if (checked) {
     return (
@@ -35,15 +36,19 @@ export function CheckinButton({ checked, offline, partnerNickname, onCheckin }: 
       disabled={busy}
       onClick={async () => {
         setBusy(true)
+        setFailed(false)
         try {
           await onCheckin()
+        } catch {
+          // 誠實但安靜：沒送出去就說沒送出去，不彈窗
+          setFailed(true)
         } finally {
           setBusy(false)
         }
       }}
       className="rounded-full bg-slate-900/30 px-4 py-2 text-sm text-white/90 backdrop-blur-md transition-colors hover:bg-slate-900/45 hover:text-white disabled:opacity-40"
     >
-      我來看過你的天空了
+      {failed ? '剛剛沒送出去，再點一次' : '我來看過你的天空了'}
     </button>
   )
 }
