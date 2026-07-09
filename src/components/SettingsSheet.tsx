@@ -58,6 +58,8 @@ export function SettingsSheet({ me, pairingSection, onClose }: Props) {
             關閉
           </button>
         </div>
+
+        <p className="text-center text-xs opacity-30">v{__APP_VERSION__}</p>
       </div>
     </div>
   )
