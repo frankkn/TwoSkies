@@ -72,8 +72,13 @@
 ## 架構
 - Vite + React + TS + Tailwind
 - Firebase：Google 登入（關係 app 身份不能丟，不用匿名）+ Firestore + Hosting。
-  登入一律用 signInWithPopup——signInWithRedirect 在 Safari 與第三方儲存分區下
-  會靜默失敗，而手機瀏覽器是這個 app 的主場景
+  **web 登入一律用 signInWithPopup**——signInWithRedirect 在 Safari 與第三方儲存分區下
+  會靜默失敗，而手機瀏覽器是這個 app 的主場景。
+  **Android 原生殼是例外**：WebView 內 Google 直接封鎖 OAuth popup，
+  FirebaseProvider.signIn() 依 Capacitor.isNativePlatform() 分流——原生走
+  @capacitor-firebase/authentication（Credential Manager）拿 idToken 餵給
+  JS SDK 的 signInWithCredential，之後整條資料層與 web 同路。
+  **這個分流不可「簡化」回單一路徑**，砍掉任一邊就是砍掉一個平台的登入
 - 天氣：**Open-Meteo**（免費、無 API key、無註冊），客戶端以雙方的粗化座標各查一份
   即時天氣，開啟時抓取＋每 15 分鐘更新＋位置變更時立即重抓；無需任何後端轉發。
   晝夜用回應裡的 is_day 欄位，不自己算日出日落；背景分頁的 setInterval 會被
@@ -144,7 +149,9 @@
   儲存層最終刪除：雙層兌現「不留歷史」
 - 啟用 Firebase App Check（reCAPTCHA v3）並對 Firestore enforce——config 是公開的、
   rules 只管「能不能」管不了「多頻繁」，App Check 是無後端架構的標準補償控制。
-  邀請碼用分享連結傳遞（code 放 URL fragment），熵和 UX 兼得
+  邀請碼用分享連結傳遞（code 放 URL fragment），熵和 UX 兼得。
+  **現況（2026-07）：尚未啟用**。啟用時必須同時處理兩個平台——web 用 reCAPTCHA v3、
+  Android 用 Play Integrity——只 enforce 其一，另一個平台的 Firestore 會全斷
 - Rules 要有 emulator 測試（@firebase/rules-unit-testing），至少涵蓋：
   非成員讀取拒絕、checkin 一天一次（ID 重複拒絕）、不可 update checkin、
   pair 存續期間刪 checkin 拒絕／pair 不存在後放行、外人不能兌換已用邀請碼、
@@ -152,6 +159,28 @@
   配對後換掉成員拒絕、夾帶白名單外欄位拒絕、expiresAt 超過 24h 上限拒絕、
   未粗化座標（非 0.1 倍數）拒絕、非成員不能刪 pair、成員解除配對放行、
   非本人不可改 users 文件（位置/稱呼只有本人能改）
+
+## Android 版與發版（Capacitor）
+- 同一份 React codebase 由 Capacitor 包成 Android 殼（appId `com.twoskies.app`）；
+  流程：`npm run build` → `npx cap sync android` → gradle。**沒有 iOS 原生版**，
+  iOS 走 PWA 加入主畫面（README 有使用者步驟）
+- **刻意沒有 service worker**：web 每次載入即最新版，「可安裝」由 APK 承擔——
+  不要好心補 SW，那會帶進快取失效與更新提示的整套麻煩
+- 簽章：固定 release keystore **不進 repo**，本地與 CI 都由 `TWOSKIES_KEYSTORE_FILE` /
+  `TWOSKIES_KEYSTORE_PASSWORD` 環境變數餵入（CI 走 repo secrets）。keystore 遺失 =
+  既有安裝無法覆蓋升級，位置與備份提醒記在 session memory，不寫在公開 repo 裡。
+  debug 與 release 兩把 SHA-1 都已註冊在 Firebase 的 Android app 上
+- `google-services.json` **有意進 repo**——與 web config 同理，都是公開值，防線在 rules
+- 發版儀式：`npm version X.Y.Z` + `git push --follow-tags`。同一個 v* tag 觸發兩條
+  workflow：release.yml（簽章 APK → GitHub Releases，README 的 latest 連結自動跟上）、
+  deploy-web.yml（部署 Hosting，也可 workflow_dispatch 單獨手動觸發）。
+  版本號單一來源是 package.json（`__APP_VERSION__` 注入、設定面板顯示）；
+  APK 的 versionName 取自 tag、versionCode 取自 run number
+- **rules 部署刻意不自動化**：`npm run test:rules` 全綠 → 人手
+  `firebase deploy --only firestore:rules`。測試通過 ≠ rules 正確（新攻擊面要配新測試），
+  這道判斷留在人手上
+- app 圖示的源頭是 `scripts/icon.html`：`node scripts/make-icons.mjs` 產 PWA 圖示、
+  `npx @capacitor/assets generate --android` 產 launcher/splash（logo 用同一份 HTML 渲染）
 
 ## 已知風險（誠實記錄）
 - 兩人 app 的死穴是「一個人先失去興趣」：沒有連續紀錄與提醒是刻意的——
@@ -167,11 +196,14 @@
 聊天、訊息、照片、已讀回條、連續天數、歷史紀錄、推播通知、精確定位、
 移動軌跡（只有「現在在哪」，沒有「去過哪」）、第三人、群組、任何 engagement 優化。
 
-## Phases
-1. 純本地原型：兩片天空渲染（晴雨雪雲 × 晝夜 × 兩地時差）+ 打卡互動（假配對、假資料）
-2. Firebase：Google 登入、配對與邀請碼流程（含解除全刪）、位置/稱呼即時同步、
+## Phases（1–4 已完成，現為維護狀態）
+1. ✅ 純本地原型：兩片天空渲染（晴雨雪雲 × 晝夜 × 兩地時差）+ 打卡互動（假配對、假資料）
+2. ✅ Firebase：Google 登入、配對與邀請碼流程（含解除全刪）、位置/稱呼即時同步、
    checkins 讀寫、rules + emulator 測試
-3. 部署 Firebase Hosting
+3. ✅ 部署 Firebase Hosting（https://twoskies.web.app）
+4. ✅ Android APK（Capacitor + 原生 Google 登入 + tag 自動發佈，v1.0.0 起）
+
+未完成的規格債：App Check（見架構節的現況註記）
 
 ## 給 Claude 的開發準則
 - 任何功能實作前先問：這會不會製造義務感或焦慮？會就不做

@@ -59,7 +59,7 @@ The product's promises are enforced by Firestore Security Rules, not by good int
 - **Invites expire within 24 hours** (rules-capped) and must be consumed atomically in the same transaction that joins the pair
 - **One pair per person** is enforced transactionally with `getAfter`
 
-All of it is covered by 33 emulator tests (`npm run test:rules`).
+All of it is covered by the emulator test suite (`npm run test:rules`).
 
 ## Tech
 
@@ -82,8 +82,11 @@ VITE_USE_MOCK=1 npm run dev
 npm run emulators                  # Auth :9099 + Firestore :8080
 VITE_USE_EMULATORS=1 npm run dev
 
-# Security Rules test suite (33 tests)
+# Security Rules test suite
 npm run test:rules
+
+# Android debug build (needs Android SDK + JDK)
+npm run build && npx cap sync android && cd android && ./gradlew assembleDebug
 ```
 
 To run against a real Firebase project, copy `.env.example` to `.env.local` and fill in your web app config.
