@@ -34,8 +34,9 @@ import {
 
 const HOUR = 3600_000
 // 對方解除配對的一次性記號：lazy cleanup 清掉 pairId 後，
-// 「配對已結束」畫面只剩這個本地記號能撐起來（見 CLAUDE.md）
-const PAIR_ENDED_KEY = 'twoskies.pairEnded'
+// 「配對已結束」畫面只剩這個本地記號能撐起來（見 CLAUDE.md）。
+// 以 uid 命名空間——同一瀏覽器換帳號登入不能看到別人的結束畫面
+const PAIR_ENDED_PREFIX = 'twoskies.pairEnded.'
 
 interface RawUser extends DocumentData {
   pairId?: string | null
@@ -126,7 +127,7 @@ export class FirebaseProvider implements DataProvider {
       if (this.selfInitiated) {
         this.selfInitiated = false
         this.emit({ phase: 'solo', me })
-      } else if (localStorage.getItem(PAIR_ENDED_KEY)) {
+      } else if (localStorage.getItem(PAIR_ENDED_PREFIX + uid)) {
         this.emit({ phase: 'pair-ended', me })
       } else {
         this.emit({ phase: 'solo', me })
@@ -155,7 +156,7 @@ export class FirebaseProvider implements DataProvider {
     if (!data) {
       // pair 消失＝解除訊號：立即退訂（上面已 teardown）、lazy cleanup 自己的 pairId。
       // users onSnapshot 會接手轉到 pair-ended（對方解除）或 solo（自己解除）
-      if (!this.selfInitiated) localStorage.setItem(PAIR_ENDED_KEY, '1')
+      if (!this.selfInitiated) localStorage.setItem(PAIR_ENDED_PREFIX + uid, '1')
       void updateDoc(doc(db, 'users', uid), { pairId: null }).catch(() => {})
       return
     }
@@ -322,7 +323,7 @@ export class FirebaseProvider implements DataProvider {
   }
 
   async acknowledgePairEnded() {
-    localStorage.removeItem(PAIR_ENDED_KEY)
+    if (this.uid) localStorage.removeItem(PAIR_ENDED_PREFIX + this.uid)
     if (this.me) this.emit({ phase: 'solo', me: this.me })
   }
 
