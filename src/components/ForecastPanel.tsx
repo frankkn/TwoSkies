@@ -9,18 +9,23 @@ function weekdayLabel(date: string, index: number): string {
   )
 }
 
-/** 常駐在天空上的預報：只有溫度和雨，直接顯示、不需點擊 */
+/** 常駐在天空上的預報：只有溫度和雨，直接顯示、不需點擊。
+ *  區塊限寬靠左——寬螢幕不撐滿，右半邊留給天空 */
 export function ForecastBlock({ bundle }: { bundle: WeatherBundle }) {
   return (
-    <div className="flex w-full flex-col gap-2.5">
-      {/* 未來 12 小時：塞滿寬度、不捲動不裁切；0% 也顯示——留白之外，數字要誠實 */}
-      <div className="flex justify-between">
+    <div className="flex w-full max-w-sm flex-col gap-3">
+      {/* 未來 24 小時：畫面固定 6 格，其餘橫向捲動（右緣漸淡提示）；0% 也顯示 */}
+      {/* 右緣內容淡出提示可捲——用 mask 透出天空，亮暗底都好看 */}
+      <div className="flex snap-x overflow-x-auto pb-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [mask-image:linear-gradient(to_left,transparent,black_2.5rem)]">
         {bundle.hourly.map((h, i) => (
-          <div key={`${h.hour}-${i}`} className="flex flex-col items-center gap-1 text-[11px] leading-none">
+          <div
+            key={`${h.hour}-${i}`}
+            className="flex shrink-0 basis-1/6 snap-start flex-col items-center gap-1.5 text-xs leading-none"
+          >
             <span className="opacity-60">{i === 0 ? '現在' : `${h.hour}時`}</span>
-            <WeatherIcon kind={h.kind} isDay={h.isDay} size={15} />
-            <span className="text-xs">{h.temperature}°</span>
-            <span className="opacity-65">{h.precipProb}%</span>
+            <WeatherIcon kind={h.kind} isDay={h.isDay} size={18} />
+            <span className="text-sm">{h.temperature}°</span>
+            <span className="text-[11px] opacity-65">{h.precipProb}%</span>
           </div>
         ))}
       </div>
@@ -29,10 +34,10 @@ export function ForecastBlock({ bundle }: { bundle: WeatherBundle }) {
 
       <ul className="flex flex-col gap-1.5">
         {bundle.daily.map((d, i) => (
-          <li key={d.date} className="flex items-center gap-3 text-xs leading-none">
-            <span className="w-8 opacity-80">{weekdayLabel(d.date, i)}</span>
-            <WeatherIcon kind={d.kind} size={16} />
-            <span className="w-9 opacity-60">{d.precipProb}%</span>
+          <li key={d.date} className="flex items-center gap-3 text-sm leading-none">
+            <span className="w-9 opacity-80">{weekdayLabel(d.date, i)}</span>
+            <WeatherIcon kind={d.kind} size={17} />
+            <span className="w-10 text-xs opacity-60">{d.precipProb}%</span>
             <span className="flex-1 text-right">
               <span className="opacity-55">{d.low}°</span>
               <span className="mx-1.5 opacity-40">—</span>

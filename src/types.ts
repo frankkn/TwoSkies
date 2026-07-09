@@ -27,7 +27,7 @@ export interface DayPoint {
 export interface WeatherBundle {
   now: WeatherNow
   today: { high: number; low: number; precipProb: number }
-  /** 未來 12 小時（含當前小時，當地時間） */
+  /** 未來 24 小時（含當前小時，當地時間） */
   hourly: HourPoint[]
   /** 今天起 7 天 */
   daily: DayPoint[]
