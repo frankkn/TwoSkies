@@ -49,7 +49,7 @@ export function SkyPane({ profile, weather, showLocalTime, visitedBy, onSettings
 
         <div className="flex-1" />
 
-        {bundle && <ForecastBlock bundle={bundle} />}
+        {bundle && <ForecastBlock bundle={bundle} lat={profile.lat} lng={profile.lng} />}
 
         <footer className="mt-3 flex items-end justify-between gap-4">
           {visitedBy ? (
