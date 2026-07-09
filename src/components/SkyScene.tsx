@@ -75,12 +75,12 @@ function Stars({ faint }: { faint?: boolean }) {
   )
 }
 
-// 太陽/月亮掛在頂部中央、微微探頭——左邊的名字和右邊的溫度都不會被壓到
+// 太陽/月亮掛在頂部中央、完整可見——左邊的名字和右邊的溫度都不會被壓到
 function Sun() {
   return (
     <>
-      <div className="absolute -top-16 left-1/2 h-44 w-44 -translate-x-1/2 rounded-full bg-amber-100/70 blur-2xl" />
-      <div className="absolute -top-6 left-1/2 h-16 w-16 -translate-x-1/2 rounded-full bg-amber-50/90 blur-[2px]" />
+      <div className="absolute -top-6 left-1/2 h-44 w-44 -translate-x-1/2 rounded-full bg-amber-100/70 blur-2xl" />
+      <div className="absolute top-8 left-1/2 h-16 w-16 -translate-x-1/2 rounded-full bg-amber-50/90 blur-[2px]" />
     </>
   )
 }

@@ -44,7 +44,19 @@ export function SkyPane({ profile, weather, showLocalTime, visitedBy, onSettings
               </button>
             )}
           </div>
-          <p className="text-4xl font-extralight">{bundle ? `${bundle.now.temperature}°` : '–'}</p>
+          <div className="flex shrink-0 flex-col items-end">
+            <p className="text-5xl font-extralight sm:text-6xl">
+              {bundle ? `${bundle.now.temperature}°` : '–'}
+            </p>
+            {bundle && (
+              <>
+                <p className="mt-1 text-sm opacity-75">
+                  最高{bundle.today.high}° 最低{bundle.today.low}°
+                </p>
+                <p className="text-sm opacity-75">{conditionLabel(bundle.now)}</p>
+              </>
+            )}
+          </div>
         </header>
 
         {/* 預報緊貼資訊區下方；七天列吃滿剩餘高度（放得下就全展開） */}
@@ -67,6 +79,13 @@ export function SkyPane({ profile, weather, showLocalTime, visitedBy, onSettings
       </div>
     </section>
   )
+}
+
+function conditionLabel(now: { kind: string; isDay: boolean }): string {
+  if (now.kind === 'clear') return now.isDay ? '晴天' : '晴朗'
+  if (now.kind === 'cloudy') return '多雲'
+  if (now.kind === 'rain') return '有雨'
+  return '降雪'
 }
 
 function GearIcon() {
