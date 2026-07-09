@@ -83,7 +83,7 @@ export function PairedScreen({ me, partner, pairId }: Props) {
   const visitedBy = partnerCame ? partner.nickname : null
   // 來訪標記在自己那片的名字下方；沒來就什麼都沒有——留白是誠實
   const visitedMark = visitedBy ? (
-    <p className="rounded-full bg-slate-900/25 px-4 py-2 text-sm text-white/70 backdrop-blur-md">
+    <p className="rounded-full bg-slate-900/25 px-4 py-1.5 text-sm text-white/70 backdrop-blur-md">
       {visitedBy}來看過你的天空了
     </p>
   ) : undefined

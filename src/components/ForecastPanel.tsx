@@ -206,7 +206,7 @@ export function ForecastBlock({ bundle, lat, lng, density = 'cozy' }: Props) {
     // 磨砂卡片（iPhone 天氣的做法）：天空再淺，預報都讀得清楚；透明度低，天空仍透得出來
     <div
       ref={blockRef}
-      className={`flex min-h-0 w-full max-w-[40rem] flex-col gap-3 rounded-2xl bg-slate-900/20 p-4 backdrop-blur-sm ${
+      className={`flex min-h-0 w-full max-w-[40rem] flex-col gap-2.5 rounded-2xl bg-slate-900/20 px-4 pb-4 pt-3 backdrop-blur-sm ${
         cozy ? 'h-full' : 'max-h-full'
       }`}
     >

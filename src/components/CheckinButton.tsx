@@ -16,7 +16,7 @@ export function CheckinButton({ checked, offline, partnerNickname, onCheckin }: 
 
   if (checked) {
     return (
-      <p className="rounded-full bg-slate-900/25 px-4 py-2 text-sm text-white/60 backdrop-blur-md">
+      <p className="rounded-full bg-slate-900/25 px-4 py-1.5 text-sm text-white/60 backdrop-blur-md">
         今天看過{partnerNickname}的天空了
       </p>
     )
@@ -25,7 +25,7 @@ export function CheckinButton({ checked, offline, partnerNickname, onCheckin }: 
   // 打卡不走離線佇列——離線佇列是「補打卡」；安靜的不可用態，不報錯
   if (offline) {
     return (
-      <p className="rounded-full bg-slate-900/25 px-4 py-2 text-sm text-white/45 backdrop-blur-md">
+      <p className="rounded-full bg-slate-900/25 px-4 py-1.5 text-sm text-white/45 backdrop-blur-md">
         天空暫時斷線
       </p>
     )
@@ -46,7 +46,7 @@ export function CheckinButton({ checked, offline, partnerNickname, onCheckin }: 
           setBusy(false)
         }
       }}
-      className="rounded-full bg-slate-900/30 px-4 py-2 text-sm text-white/90 backdrop-blur-md transition-colors hover:bg-slate-900/45 hover:text-white disabled:opacity-40"
+      className="rounded-full bg-slate-900/30 px-4 py-1.5 text-sm text-white/90 backdrop-blur-md transition-colors hover:bg-slate-900/45 hover:text-white disabled:opacity-40"
     >
       {failed ? '剛剛沒送出去，再點一次' : '我來看過你的天空了'}
     </button>

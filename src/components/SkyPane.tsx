@@ -45,7 +45,7 @@ export function SkyPane({ profile, weather, showLocalTime, ritual, onSettingsCli
         }`}
       >
         <header className="flex items-start justify-between">
-          <div className="flex min-w-0 flex-col items-start gap-2">
+          <div className="flex min-w-0 flex-col items-start gap-1">
             <div className="min-w-0">
               <div className="flex items-center gap-2">
                 <h2 className="truncate text-lg font-medium">{profile.nickname}</h2>
@@ -85,7 +85,7 @@ export function SkyPane({ profile, weather, showLocalTime, ritual, onSettingsCli
 
         {/* 預報緊貼資訊區下方；七天列吃滿剩餘高度（放得下就全展開） */}
         {bundle ? (
-          <div className="mt-4 min-h-0 flex-1 overflow-hidden">
+          <div className="mt-1 min-h-0 flex-1 overflow-hidden">
             <ForecastBlock bundle={bundle} lat={profile.lat} lng={profile.lng} density={forecastDensity} />
           </div>
         ) : (
