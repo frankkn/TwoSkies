@@ -7,7 +7,7 @@ import type { Profile } from '../types'
 import { useWeather } from '../weather/useWeather'
 
 const pill =
-  'rounded-full border border-white/25 bg-white/10 px-4 py-1.5 text-sm text-white/85 backdrop-blur transition-colors hover:bg-white/20 disabled:opacity-40'
+  'rounded-full border border-white/30 bg-slate-900/30 px-4 py-1.5 text-sm text-white backdrop-blur-md transition-colors hover:bg-slate-900/45 disabled:opacity-40'
 
 export function PendingScreen({ me, inviteCode }: { me: Profile; inviteCode: string }) {
   const weather = useWeather(me.lat, me.lng)
