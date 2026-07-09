@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import type { HourPoint, WeatherBundle } from '../types'
+import { nudgeFor } from '../weather/nudge'
 import { fetchDayHourly } from '../weather/openMeteo'
 import { WeatherIcon } from './WeatherIcon'
 
@@ -198,6 +199,9 @@ export function ForecastBlock({ bundle, lat, lng, density = 'cozy' }: Props) {
   const weekRange = Math.max(1, weekMax - weekMin)
   const pos = (t: number) => Math.min(100, Math.max(0, ((t - weekMin) / weekRange) * 100))
 
+  // 天氣叮嚀（iPhone 式）：cozy 顯示兩句、compact 空間緊只顯示第一句;沒話說就不渲染
+  const nudges = nudgeFor(bundle)
+
   return (
     // 磨砂卡片（iPhone 天氣的做法）：天空再淺，預報都讀得清楚；透明度低，天空仍透得出來
     <div
@@ -206,6 +210,15 @@ export function ForecastBlock({ bundle, lat, lng, density = 'cozy' }: Props) {
         cozy ? 'h-full' : 'max-h-full'
       }`}
     >
+      {nudges.length > 0 && (
+        <>
+          <p className={`shrink-0 leading-relaxed opacity-90 ${cozy ? 'text-sm' : 'text-xs'}`}>
+            {cozy ? nudges.join('。') : nudges[0]}
+          </p>
+          <hr className="shrink-0 border-white/20" />
+        </>
+      )}
+
       <HourStrip hours={bundle.hourly} cols={cols} nowLabel />
 
       <hr className="shrink-0 border-white/20" />

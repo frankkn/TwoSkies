@@ -16,7 +16,7 @@ export async function fetchWeather(lat: number, lng: number): Promise<WeatherBun
     `https://api.open-meteo.com/v1/forecast` +
     `?latitude=${lat}&longitude=${lng}` +
     `&current=temperature_2m,weather_code,is_day` +
-    `&hourly=temperature_2m,precipitation_probability,weather_code,is_day&forecast_hours=24` +
+    `&hourly=temperature_2m,precipitation_probability,weather_code,is_day,wind_gusts_10m&forecast_hours=24` +
     `&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&forecast_days=10` +
     `&timezone=auto`
   const res = await fetch(url)
@@ -30,13 +30,17 @@ export async function fetchWeather(lat: number, lng: number): Promise<WeatherBun
     isDay: current.is_day === 1,
   }
 
-  const hourly: HourPoint[] = ((json.hourly?.time ?? []) as string[]).map((t, i) => ({
-    hour: Number(t.slice(11, 13)),
-    kind: weatherKindFromWmo(json.hourly.weather_code?.[i] ?? 0),
-    isDay: (json.hourly.is_day?.[i] ?? 1) === 1,
-    temperature: Math.round(json.hourly.temperature_2m[i]),
-    precipProb: Math.round(json.hourly.precipitation_probability?.[i] ?? 0),
-  }))
+  const hourly: HourPoint[] = ((json.hourly?.time ?? []) as string[]).map((t, i) => {
+    const gustRaw = json.hourly.wind_gusts_10m?.[i]
+    return {
+      hour: Number(t.slice(11, 13)),
+      kind: weatherKindFromWmo(json.hourly.weather_code?.[i] ?? 0),
+      isDay: (json.hourly.is_day?.[i] ?? 1) === 1,
+      temperature: Math.round(json.hourly.temperature_2m[i]),
+      precipProb: Math.round(json.hourly.precipitation_probability?.[i] ?? 0),
+      gust: typeof gustRaw === 'number' ? Math.round(gustRaw) : undefined,
+    }
+  })
 
   // 「現在」那格顯示即時值，跟右上角的大字一致——
   // hourly[0] 是「這個小時」的整點值，一小時內升降溫時會跟即時值差 1°
