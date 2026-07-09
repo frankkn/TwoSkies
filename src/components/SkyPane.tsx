@@ -44,7 +44,7 @@ export function SkyPane({ profile, weather, showLocalTime, visitedBy, onSettings
               </button>
             )}
           </div>
-          <div className="flex shrink-0 flex-col items-end">
+          <div className="flex shrink-0 flex-col items-center">
             <p className="text-5xl font-extralight sm:text-6xl">
               {bundle ? `${bundle.now.temperature}°` : '–'}
             </p>
