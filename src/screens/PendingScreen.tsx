@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { SettingsSheet } from '../components/SettingsSheet'
 import { SkyPane } from '../components/SkyPane'
 import { provider } from '../data'
@@ -11,8 +11,20 @@ import { useWeather } from '../weather/useWeather'
 export function PendingScreen({ me, inviteCode }: { me: Profile; inviteCode: string }) {
   const weather = useWeather(me.lat, me.lng)
   const [showSettings, setShowSettings] = useState(false)
-  const [copied, setCopied] = useState(false)
+  const [copied, setCopied] = useState<'link' | 'code' | null>(null)
   const [busy, setBusy] = useState(false)
+  const copiedTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
+
+  function copy(kind: 'link' | 'code', text: string) {
+    navigator.clipboard
+      .writeText(text)
+      .then(() => {
+        setCopied(kind)
+        clearTimeout(copiedTimer.current)
+        copiedTimer.current = setTimeout(() => setCopied(null), 2000)
+      })
+      .catch(() => {})
+  }
 
   return (
     <main className="relative flex h-dvh flex-col">
@@ -25,17 +37,15 @@ export function PendingScreen({ me, inviteCode }: { me: Profile; inviteCode: str
           <div className="flex gap-4">
             <button
               className="py-1 text-sm text-white/70 transition-opacity hover:text-white"
-              onClick={() => {
-                navigator.clipboard
-                  .writeText(inviteLink(inviteCode))
-                  .then(() => {
-                    setCopied(true)
-                    setTimeout(() => setCopied(false), 2000)
-                  })
-                  .catch(() => {})
-              }}
+              onClick={() => copy('link', inviteLink(inviteCode))}
             >
-              {copied ? '已複製' : '複製邀請連結'}
+              {copied === 'link' ? '已複製' : '複製連結'}
+            </button>
+            <button
+              className="py-1 text-sm text-white/70 transition-opacity hover:text-white"
+              onClick={() => copy('code', inviteCode)}
+            >
+              {copied === 'code' ? '已複製' : '複製邀請碼'}
             </button>
             <button
               className="py-1 text-sm text-white/50 transition-opacity hover:text-white/80 disabled:opacity-40"
