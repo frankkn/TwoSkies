@@ -305,12 +305,12 @@ export class FirebaseProvider implements DataProvider {
       this.selfInitiated = false // 解除沒成立，旗標復位（同 cancelInvite）
       throw e
     }
-    // 後續清理：孤兒 checkins 的 ID 可確定性算出（昨天/今天 × 兩人 tz × 兩人 uid）；
-    // 中途斷線由 TTL 兜底
+    // 後續清理：孤兒 checkins 的 ID 可確定性算出（前天/昨天/今天 × 兩人 tz × 兩人 uid）——
+    // checkin 最長活 48h＋TTL 延遲，前天的可能還在；中途斷線由 TTL 兜底
     try {
       const batch = writeBatch(db)
       const dateKeys = new Set<string>()
-      for (const offset of [0, 86_400_000]) {
+      for (const offset of [0, 86_400_000, 172_800_000]) {
         const d = new Date(Date.now() - offset)
         dateKeys.add(dateKeyFor(s.me.tz, d))
         dateKeys.add(dateKeyFor(s.partner.tz, d))
