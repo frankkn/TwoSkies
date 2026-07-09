@@ -18,7 +18,7 @@ export function SettingsSheet({ me, pairingSection, onClose }: Props) {
       onClick={onClose}
     >
       <div
-        className="flex w-full max-w-sm flex-col gap-5 rounded-t-2xl bg-slate-900/95 p-6 text-white sm:rounded-2xl"
+        className="flex w-full max-w-sm flex-col gap-5 rounded-t-2xl bg-slate-900/95 p-6 pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))] text-white sm:rounded-2xl sm:pb-6"
         onClick={e => e.stopPropagation()}
       >
         <ProfileForm

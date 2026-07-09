@@ -13,17 +13,35 @@ interface Props {
   visitedBy?: string | null
   /** 有值就在左上資訊區下方顯示齒輪設定入口 */
   onSettingsClick?: () => void
+  /**
+   * 這片天空貼著螢幕的哪些邊：貼邊處的留白要加上系統列的 safe-area inset，
+   * 否則 edge-to-edge 下打卡膠囊/邀請碼動作會沉到 Android 導覽列後面。
+   * 配對畫面上片傳 'top'、下片傳 'bottom'；單人全螢幕用預設 'both'
+   */
+  safeArea?: 'top' | 'bottom' | 'both'
   children?: ReactNode
 }
 
-export function SkyPane({ profile, weather, showLocalTime, visitedBy, onSettingsClick, children }: Props) {
+export function SkyPane({ profile, weather, showLocalTime, visitedBy, onSettingsClick, safeArea = 'both', children }: Props) {
   const now = useNow(profile.tz)
   const bundle = weather.status === 'ok' ? weather.weather : null
+  const safeTop = safeArea !== 'bottom'
+  const safeBottom = safeArea !== 'top'
 
   return (
     <section className="relative flex-1 overflow-hidden">
       <SkyScene sky={bundle?.now ?? null} error={weather.status === 'error'} />
-      <div className="absolute inset-0 flex flex-col p-5 text-white [text-shadow:0_1px_10px_rgba(0,0,0,0.35)] sm:p-8">
+      <div
+        className={`absolute inset-0 flex flex-col px-5 text-white [text-shadow:0_1px_10px_rgba(0,0,0,0.35)] sm:px-8 ${
+          safeTop
+            ? 'pt-[calc(1.25rem+env(safe-area-inset-top,0px))] sm:pt-[calc(2rem+env(safe-area-inset-top,0px))]'
+            : 'pt-5 sm:pt-8'
+        } ${
+          safeBottom
+            ? 'pb-[calc(1.25rem+env(safe-area-inset-bottom,0px))] sm:pb-[calc(2rem+env(safe-area-inset-bottom,0px))]'
+            : 'pb-5 sm:pb-8'
+        }`}
+      >
         <header className="flex items-start justify-between">
           <div className="flex flex-col items-start gap-1">
             <div>

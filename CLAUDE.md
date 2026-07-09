@@ -192,6 +192,15 @@
   這道判斷留在人手上
 - app 圖示的源頭是 `scripts/icon.html`：`node scripts/make-icons.mjs` 產 PWA 圖示、
   `npx @capacitor/assets generate --android` 產 launcher/splash（logo 用同一份 HTML 渲染）
+- **edge-to-edge 與 safe-area**：天空全幅延伸到系統列後面（MainActivity 的
+  `EdgeToEdge.enable` + `SystemBarStyle.dark(TRANSPARENT)`——亮色系統圖示，這個 app
+  白晝天空也配白字）；內容避讓靠 `@capacitor-community/safe-area` 讓標準
+  `env(safe-area-inset-*)` 在 Android WebView 生效（Chromium <140 由外掛原生內縮兜底，
+  此時系統列露出 windowBackground 的夜空色 `@color/twoskiesNight`，看起來像設計）。
+  SkyPane 依 `safeArea` prop（top/bottom/both）把貼螢幕邊的留白加上 inset——
+  配對畫面上片 top、下片 bottom；SettingsSheet 底部同樣墊了 inset。
+  **不要**另裝 @capacitor/status-bar（與 safe-area 外掛衝突）；capacitor.config 的
+  `SystemBars.insetsHandling: "disable"` 是 Capacitor 8 的必要設定，不要移除
 
 ## 已知風險（誠實記錄）
 - 兩人 app 的死穴是「一個人先失去興趣」：沒有連續紀錄與提醒是刻意的——

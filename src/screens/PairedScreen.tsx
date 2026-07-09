@@ -62,12 +62,13 @@ export function PairedScreen({ me, partner, pairId }: Props) {
 
   return (
     <main className="flex h-dvh flex-col">
-      <SkyPane profile={partner} weather={partnerWeather} showLocalTime />
+      <SkyPane profile={partner} weather={partnerWeather} showLocalTime safeArea="top" />
       <SkyPane
         profile={me}
         weather={myWeather}
         visitedBy={partnerCame ? partner.nickname : null}
         onSettingsClick={() => setShowSettings(true)}
+        safeArea="bottom"
       >
         <CheckinButton
           checked={iCame}

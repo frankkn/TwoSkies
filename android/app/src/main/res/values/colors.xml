@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 夜空底色，與 PWA manifest 的 theme_color 一致 -->
+    <color name="twoskiesNight">#0B1026</color>
+</resources>

@@ -13,6 +13,9 @@
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
         <item name="android:background">@null</item>
+        <!-- 舊版 WebView（Chromium<140）走 safe-area 外掛的原生內縮兜底時，
+             系統列後面露出的是 windowBackground——給夜空色，讓兜底看起來像設計 -->
+        <item name="android:windowBackground">@color/twoskiesNight</item>
     </style>
 
 
