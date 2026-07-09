@@ -49,8 +49,9 @@ $env:VITE_USE_EMULATORS='1'; npm run dev -- --port 5175 --strictPort
   /auto-generate/i、/sign in with google/i
 - 雙使用者用兩個 browser context（各自獨立的 storage = 兩個帳號）
 - geocoding/天氣都 route-fulfill 假資料，e2e 不依賴外網
-- 值得驅動的完整流程：A 登入→onboarding→邀請（testid: invite-code）→
-  B 登入→onboarding→輸入邀請碼→雙方 paired（A 是即時轉的）→B 打卡→
-  A 即時看到標記→A 解除（點自己名字開設定）→B 即時看到「配對已結束」→
-  probe：舊 code 再兌換要看到「已被使用或已過期」
+- 值得驅動的完整流程：A 登入→onboarding→設定（右上 ⋯）→邀請一個人
+  （testid: invite-code 在天空上）→B 登入→onboarding→設定→輸入邀請碼→
+  雙方 paired（A 是即時轉的）→B 打卡（一行文字「我來看過你的天空了」）→
+  A 即時看到「阿寶來看過你的天空了」→A 解除（⋯ 設定裡）→
+  B 即時看到「配對已結束」→probe：舊 code 再兌換要看到「已被使用或已過期」
 - 除錯：Firestore listener 帶 [twoskies] console.warn；emulator 端看 firestore-debug.log

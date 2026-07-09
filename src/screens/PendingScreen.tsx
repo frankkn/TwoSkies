@@ -6,9 +6,8 @@ import { inviteLink } from '../lib/inviteCode'
 import type { Profile } from '../types'
 import { useWeather } from '../weather/useWeather'
 
-const pill =
-  'rounded-full border border-white/30 bg-slate-900/30 px-4 py-1.5 text-sm text-white backdrop-blur-md transition-colors hover:bg-slate-900/45 disabled:opacity-40'
-
+// 等待配對是短暫的過渡：邀請碼直接顯示在天空上（使用者剛按下邀請，正需要它），
+// 但整組維持純文字的輕
 export function PendingScreen({ me, inviteCode }: { me: Profile; inviteCode: string }) {
   const weather = useWeather(me.lat, me.lng)
   const [showSettings, setShowSettings] = useState(false)
@@ -17,15 +16,15 @@ export function PendingScreen({ me, inviteCode }: { me: Profile; inviteCode: str
 
   return (
     <main className="relative flex h-dvh flex-col">
-      <SkyPane profile={me} weather={weather} onProfileClick={() => setShowSettings(true)}>
-        <div className="flex flex-col items-end gap-2">
-          <p className="text-sm opacity-75">把這串邀請碼交給那個人</p>
+      <SkyPane profile={me} weather={weather} onSettingsClick={() => setShowSettings(true)}>
+        <div className="flex flex-col items-end gap-1.5">
+          <p className="text-sm text-white/70">把這串邀請碼交給那個人</p>
           <p data-testid="invite-code" className="font-mono text-xl tracking-[0.2em]">
             {inviteCode}
           </p>
-          <div className="flex gap-2">
+          <div className="flex gap-4">
             <button
-              className={pill}
+              className="py-1 text-sm text-white/70 transition-opacity hover:text-white"
               onClick={() => {
                 navigator.clipboard
                   .writeText(inviteLink(inviteCode))
@@ -39,7 +38,7 @@ export function PendingScreen({ me, inviteCode }: { me: Profile; inviteCode: str
               {copied ? '已複製' : '複製邀請連結'}
             </button>
             <button
-              className={pill}
+              className="py-1 text-sm text-white/50 transition-opacity hover:text-white/80 disabled:opacity-40"
               disabled={busy}
               onClick={async () => {
                 setBusy(true)
@@ -55,7 +54,7 @@ export function PendingScreen({ me, inviteCode }: { me: Profile; inviteCode: str
           </div>
         </div>
       </SkyPane>
-      {showSettings && <SettingsSheet me={me} paired={false} onClose={() => setShowSettings(false)} />}
+      {showSettings && <SettingsSheet me={me} onClose={() => setShowSettings(false)} />}
     </main>
   )
 }

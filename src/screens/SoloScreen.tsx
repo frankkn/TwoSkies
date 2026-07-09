@@ -8,7 +8,7 @@ import type { Profile } from '../types'
 import { useWeather } from '../weather/useWeather'
 
 const pill =
-  'rounded-full border border-white/30 bg-slate-900/30 px-4 py-1.5 text-sm text-white backdrop-blur-md transition-colors hover:bg-slate-900/45 disabled:opacity-40'
+  'rounded-full border border-white/25 bg-white/10 px-4 py-1.5 text-sm text-white/90 transition-colors hover:bg-white/20 disabled:opacity-40'
 
 export function SoloScreen({ me }: { me: Profile }) {
   const weather = useWeather(me.lat, me.lng)
@@ -46,45 +46,53 @@ export function SoloScreen({ me }: { me: Profile }) {
     }
   }
 
+  // 配對功能收在設定裡：主畫面回歸純粹的天氣
+  const pairingSection = (
+    <div className="flex flex-col gap-3">
+      <p className="text-sm opacity-75">兩片天空</p>
+      {entering ? (
+        <div className="flex items-center gap-2">
+          <input
+            autoFocus
+            className="w-40 rounded-full border border-white/25 bg-white/10 px-4 py-1.5 text-sm text-white placeholder-white/40 outline-none focus:border-white/50"
+            placeholder="輸入邀請碼"
+            value={code}
+            onChange={e => setCode(e.target.value.trim().toLowerCase())}
+          />
+          <button className={pill} disabled={busy || code.length < 8} onClick={() => redeem(code)}>
+            加入
+          </button>
+          <button
+            className="text-xs opacity-60 hover:opacity-90"
+            onClick={() => {
+              setEntering(false)
+              setError('')
+            }}
+          >
+            算了
+          </button>
+        </div>
+      ) : (
+        <div className="flex gap-2">
+          <button
+            className={pill}
+            disabled={busy}
+            onClick={() => provider.createInvite().catch(() => setError('暫時連不上，再試一次'))}
+          >
+            邀請一個人
+          </button>
+          <button className={pill} onClick={() => setEntering(true)}>
+            輸入邀請碼
+          </button>
+        </div>
+      )}
+      {error && <p className="text-xs opacity-70">{error}</p>}
+    </div>
+  )
+
   return (
     <main className="relative flex h-dvh flex-col">
-      <SkyPane profile={me} weather={weather} onProfileClick={() => setShowSettings(true)}>
-        <div className="flex flex-col items-end gap-2">
-          {error && <p className="text-xs opacity-70">{error}</p>}
-          {entering ? (
-            <div className="flex items-center gap-2">
-              <input
-                autoFocus
-                className="w-40 rounded-full border border-white/25 bg-white/10 px-4 py-1.5 text-sm text-white placeholder-white/40 outline-none focus:border-white/50"
-                placeholder="輸入邀請碼"
-                value={code}
-                onChange={e => setCode(e.target.value.trim().toLowerCase())}
-              />
-              <button className={pill} disabled={busy || code.length < 8} onClick={() => redeem(code)}>
-                加入
-              </button>
-              <button
-                className="text-xs opacity-60 hover:opacity-90"
-                onClick={() => {
-                  setEntering(false)
-                  setError('')
-                }}
-              >
-                算了
-              </button>
-            </div>
-          ) : (
-            <div className="flex gap-2">
-              <button className={pill} disabled={busy} onClick={() => provider.createInvite().catch(() => setError('暫時連不上，再試一次'))}>
-                邀請一個人
-              </button>
-              <button className={pill} onClick={() => setEntering(true)}>
-                輸入邀請碼
-              </button>
-            </div>
-          )}
-        </div>
-      </SkyPane>
+      <SkyPane profile={me} weather={weather} onSettingsClick={() => setShowSettings(true)} />
 
       {linkInvite && (
         <div className="absolute inset-0 z-10 flex items-center justify-center bg-slate-950/60 backdrop-blur-sm">
@@ -109,7 +117,9 @@ export function SoloScreen({ me }: { me: Profile }) {
         </div>
       )}
 
-      {showSettings && <SettingsSheet me={me} paired={false} onClose={() => setShowSettings(false)} />}
+      {showSettings && (
+        <SettingsSheet me={me} pairingSection={pairingSection} onClose={() => setShowSettings(false)} />
+      )}
     </main>
   )
 }
