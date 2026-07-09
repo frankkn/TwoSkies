@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 import { provider } from '../data'
 import type { Profile } from '../types'
 import { ProfileForm } from './ProfileForm'
@@ -11,6 +11,7 @@ interface Props {
 }
 
 export function SettingsSheet({ me, pairingSection, onClose }: Props) {
+  const [confirmSignOut, setConfirmSignOut] = useState(false)
   return (
     <div
       className="fixed inset-0 z-20 flex items-end justify-center bg-slate-950/70 backdrop-blur-sm sm:items-center"
@@ -39,9 +40,20 @@ export function SettingsSheet({ me, pairingSection, onClose }: Props) {
         <hr className="border-white/10" />
 
         <div className="flex items-center justify-between">
-          <button className="text-sm opacity-50 hover:opacity-80" onClick={() => provider.signOut()}>
-            登出
-          </button>
+          {confirmSignOut ? (
+            <div className="flex items-center gap-3">
+              <button className="text-sm opacity-80 hover:opacity-100" onClick={() => provider.signOut()}>
+                確定登出
+              </button>
+              <button className="text-sm opacity-50 hover:opacity-80" onClick={() => setConfirmSignOut(false)}>
+                再想想
+              </button>
+            </div>
+          ) : (
+            <button className="text-sm opacity-50 hover:opacity-80" onClick={() => setConfirmSignOut(true)}>
+              登出
+            </button>
+          )}
           <button className="text-sm opacity-60 hover:opacity-90" onClick={onClose}>
             關閉
           </button>
