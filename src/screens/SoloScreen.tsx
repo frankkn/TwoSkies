@@ -83,7 +83,18 @@ export function SoloScreen({ me }: { me: Profile }) {
           <button
             className={pill}
             disabled={busy}
-            onClick={() => provider.createInvite().catch(() => setError('暫時連不上，再試一次'))}
+            onClick={async () => {
+              // busy 防護：連點會發出第二個 batch，被 rules 拒絕後顯示誤導的錯誤
+              setBusy(true)
+              setError('')
+              try {
+                await provider.createInvite()
+              } catch {
+                setError('暫時連不上，再試一次')
+              } finally {
+                setBusy(false)
+              }
+            }}
           >
             邀請一個人
           </button>
