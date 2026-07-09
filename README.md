@@ -52,6 +52,8 @@ Before pairing, it's just a quiet weather app for one. When someone redeems your
 
 Each sky shows live conditions (rendered as slow, quiet animation — drifting clouds, falling rain, twinkling stars, sun and moon by that city's own daylight), current temperature with today's high/low, a 24-hour hourly strip, and a 7-day forecast with iPhone-style temperature range bars — all on a frosted glass card, all in **that place's local clock**. Their 8 PM is your view of their evening.
 
+If the split screen feels cramped on a phone, settings offers a "**one big sky**" mode: their sky goes full screen and yours becomes a slim horizon strip at the bottom — tap it to swap.
+
 Weather data comes from [Open-Meteo](https://open-meteo.com) — free, no API key, queried straight from the browser.
 
 ## Honesty as infrastructure

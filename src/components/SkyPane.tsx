@@ -1,6 +1,6 @@
-import { useEffect, useState, type ReactNode } from 'react'
+import type { ReactNode } from 'react'
 import type { Profile, WeatherStatus } from '../types'
-import { localTimeIn } from '../lib/time'
+import { useNow } from '../lib/time'
 import { ForecastBlock } from './ForecastPanel'
 import { SkyScene } from './SkyScene'
 
@@ -116,14 +116,4 @@ function GearIcon() {
       <path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1.03 1.56V21a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-1.12-1.56 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.56-1.03H3a2 2 0 1 1 0-4h.09a1.7 1.7 0 0 0 1.56-1.12 1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34h.01a1.7 1.7 0 0 0 1.03-1.56V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1.03 1.56 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87v.01a1.7 1.7 0 0 0 1.56 1.03H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.51 1.03Z" />
     </svg>
   )
-}
-
-function useNow(tz: string): string {
-  const [now, setNow] = useState(() => localTimeIn(tz))
-  useEffect(() => {
-    setNow(localTimeIn(tz))
-    const timer = setInterval(() => setNow(localTimeIn(tz)), 30_000)
-    return () => clearInterval(timer)
-  }, [tz])
-  return now
 }

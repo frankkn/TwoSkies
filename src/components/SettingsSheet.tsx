@@ -5,12 +5,14 @@ import { ProfileForm } from './ProfileForm'
 
 interface Props {
   me: Profile
+  /** paired 才有：檢視模式（兩片同框/一片大天空）的切換小節 */
+  viewModeSection?: ReactNode
   /** 各狀態自己的配對區塊（solo：邀請/輸入邀請碼；paired：解除配對） */
   pairingSection?: ReactNode
   onClose: () => void
 }
 
-export function SettingsSheet({ me, pairingSection, onClose }: Props) {
+export function SettingsSheet({ me, viewModeSection, pairingSection, onClose }: Props) {
   const [confirmSignOut, setConfirmSignOut] = useState(false)
   return (
     <div
@@ -29,6 +31,13 @@ export function SettingsSheet({ me, pairingSection, onClose }: Props) {
             onClose()
           }}
         />
+
+        {viewModeSection && (
+          <>
+            <hr className="border-white/10" />
+            {viewModeSection}
+          </>
+        )}
 
         {pairingSection && (
           <>

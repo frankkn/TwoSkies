@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react'
 import { CheckinButton } from '../components/CheckinButton'
+import { HorizonStrip } from '../components/HorizonStrip'
 import { SettingsSheet } from '../components/SettingsSheet'
 import { SkyPane } from '../components/SkyPane'
 import { provider } from '../data'
 import { checkinId, dateKeyFor } from '../lib/time'
 import { useOnline } from '../lib/useOnline'
+import { readViewMode, writeViewMode, type ViewMode } from '../lib/viewMode'
 import type { Profile } from '../types'
 import { useWeather } from '../weather/useWeather'
 
@@ -21,6 +23,15 @@ export function PairedScreen({ me, partner, pairId }: Props) {
   const [showSettings, setShowSettings] = useState(false)
   const [confirmUnpair, setConfirmUnpair] = useState(false)
   const [busy, setBusy] = useState(false)
+  const [viewMode, setViewMode] = useState<ViewMode>(() => readViewMode())
+  const [focused, setFocused] = useState<'partner' | 'me'>('partner')
+
+  function changeViewMode(mode: ViewMode) {
+    setViewMode(mode)
+    writeViewMode(mode)
+    // 每次「進入」focus 模式都回到對方——打開這個模式的第一眼永遠是對方的天空
+    if (mode === 'focus') setFocused('partner')
+  }
 
   // 「今天」各自以打卡者自己的時區為準：查對方的打卡用對方的 tz、
   // 查自己的用自己的 tz（見 CLAUDE.md 規則 6 與即時性節）
@@ -60,25 +71,101 @@ export function PairedScreen({ me, partner, pairId }: Props) {
     </button>
   )
 
+  // 打卡語意歸位：「我來看過你的天空了」發生在看對方天空時——掛在對方那片的 footer
+  const checkin = (
+    <CheckinButton
+      checked={iCame}
+      offline={!online}
+      partnerNickname={partner.nickname}
+      onCheckin={() => provider.createCheckin(pairId, myCheckinId)}
+    />
+  )
+  const visitedBy = partnerCame ? partner.nickname : null
+
+  // 檢視模式是裝置偏好（localStorage），收在設定裡；當前值亮一點
+  const viewModeSection = (
+    <div className="flex flex-col gap-3">
+      <p className="text-sm opacity-75">檢視模式</p>
+      <div className="flex gap-4">
+        <button
+          className={`text-sm ${viewMode === 'split' ? 'opacity-90' : 'opacity-50 hover:opacity-80'}`}
+          onClick={() => changeViewMode('split')}
+        >
+          兩片同框
+        </button>
+        <button
+          className={`text-sm ${viewMode === 'focus' ? 'opacity-90' : 'opacity-50 hover:opacity-80'}`}
+          onClick={() => changeViewMode('focus')}
+        >
+          一片大天空
+        </button>
+      </div>
+    </div>
+  )
+
   return (
     <main className="flex h-dvh flex-col">
-      <SkyPane profile={partner} weather={partnerWeather} showLocalTime safeArea="top" />
-      <SkyPane
-        profile={me}
-        weather={myWeather}
-        visitedBy={partnerCame ? partner.nickname : null}
-        onSettingsClick={() => setShowSettings(true)}
-        safeArea="bottom"
-      >
-        <CheckinButton
-          checked={iCame}
-          offline={!online}
-          partnerNickname={partner.nickname}
-          onCheckin={() => provider.createCheckin(pairId, myCheckinId)}
-        />
-      </SkyPane>
+      {viewMode === 'split' ? (
+        <>
+          <SkyPane profile={partner} weather={partnerWeather} showLocalTime safeArea="top">
+            {checkin}
+          </SkyPane>
+          <SkyPane
+            profile={me}
+            weather={myWeather}
+            visitedBy={visitedBy}
+            onSettingsClick={() => setShowSettings(true)}
+            safeArea="bottom"
+          />
+        </>
+      ) : focused === 'partner' ? (
+        <>
+          {/* key 必加：同型別 SkyPane 互換會被 React 重用實例，
+              ForecastBlock 的手風琴快取只以日期為 key——倫敦的逐時會畫進台北的手風琴 */}
+          <SkyPane
+            key={partner.uid}
+            profile={partner}
+            weather={partnerWeather}
+            showLocalTime
+            safeArea="top"
+            onSettingsClick={() => setShowSettings(true)}
+          >
+            {checkin}
+          </SkyPane>
+          <HorizonStrip
+            position="bottom"
+            profile={me}
+            weather={myWeather}
+            visitedBy={visitedBy}
+            onTap={() => setFocused('me')}
+          />
+        </>
+      ) : (
+        <>
+          <HorizonStrip
+            position="top"
+            profile={partner}
+            weather={partnerWeather}
+            showLocalTime
+            onTap={() => setFocused('partner')}
+          />
+          <SkyPane
+            key={me.uid}
+            profile={me}
+            weather={myWeather}
+            visitedBy={visitedBy}
+            safeArea="bottom"
+            onSettingsClick={() => setShowSettings(true)}
+          />
+        </>
+      )}
       {showSettings && (
-        <SettingsSheet me={me} pairingSection={pairingSection} onClose={() => setShowSettings(false)} />
+        <SettingsSheet
+          me={me}
+          viewModeSection={viewModeSection}
+          pairingSection={pairingSection}
+          onClose={() => setShowSettings(false)}
+        />
       )}
     </main>
   )
