@@ -81,11 +81,28 @@ const HOUR_COL_PX = 64
 
 function HourStrip({ hours, cols, nowLabel }: { hours: HourPoint[]; cols: number; nowLabel?: boolean }) {
   const ref = useDragScroll('x')
+  // 右緣淡出只在「右邊還有內容」時出現——恆定遮罩會讓捲到底後的最後一欄永遠讀不清
+  const [atEnd, setAtEnd] = useState(false)
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const check = () => setAtEnd(el.scrollLeft + el.clientWidth >= el.scrollWidth - 1)
+    check()
+    el.addEventListener('scroll', check, { passive: true })
+    const observer = new ResizeObserver(check)
+    observer.observe(el)
+    return () => {
+      el.removeEventListener('scroll', check)
+      observer.disconnect()
+    }
+  }, [ref])
 
   return (
     <div
       ref={ref}
-      className="flex shrink-0 cursor-grab snap-x select-none overflow-x-auto pb-0.5 active:cursor-grabbing [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [mask-image:linear-gradient(to_left,transparent,black_2.5rem)]"
+      className={`flex shrink-0 cursor-grab snap-x select-none overflow-x-auto pb-0.5 active:cursor-grabbing [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${
+        atEnd ? '' : '[mask-image:linear-gradient(to_left,transparent,black_2.5rem)]'
+      }`}
     >
       {hours.map((h, i) => (
         <div
