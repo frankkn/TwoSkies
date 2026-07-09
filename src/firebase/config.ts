@@ -1,4 +1,5 @@
 import { initializeApp } from 'firebase/app'
+import { initializeAppCheck, ReCaptchaV3Provider } from 'firebase/app-check'
 import { connectAuthEmulator, getAuth } from 'firebase/auth'
 import {
   connectFirestoreEmulator,
@@ -15,6 +16,16 @@ const app = initializeApp({
   projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID ?? 'demo-twoskies',
   appId: import.meta.env.VITE_FIREBASE_APP_ID ?? 'demo-app-id',
 })
+
+// App Check：無後端架構的補償控制（rules 管「能不能」，App Check 擋非法 client）。
+// emulator 模式不啟用；沒設 site key 也安靜跳過（enforce 未開時不影響功能）
+const recaptchaSiteKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY
+if (recaptchaSiteKey && !useEmulators) {
+  initializeAppCheck(app, {
+    provider: new ReCaptchaV3Provider(recaptchaSiteKey),
+    isTokenAutoRefreshEnabled: true,
+  })
+}
 
 export const auth = getAuth(app)
 
