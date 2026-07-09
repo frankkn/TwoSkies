@@ -15,7 +15,12 @@
 ### Android 安裝
 1. 下載 [app-twoskies.apk（最新版）](https://github.com/frankkn/TwoSkies/releases/latest/download/app-twoskies.apk)
 2. 在手機「設定」→「安全性」→ 開啟「**允許安裝不明來源的應用程式**」
-3. 點開下載的 APK 安裝，開啟後用 Google 登入
+3. 點開下載的 APK 安裝
+4. 若跳出「Play 安全防護已封鎖應用程式」：點「**更多詳情**」→「**仍要安裝**」。
+   這是側載 app 的例行關卡（Google 沒看過這個開發者），不是 APK 有問題；
+   若沒有「仍要安裝」選項，到 Play 商店 → 頭像 → Play 安全防護 → 設定，
+   暫時關閉掃描，裝完再開回來
+5. 開啟兩片天空，用 Google 登入
 
 ### iOS（加入主畫面）
 1. 用 **Safari** 開啟 [兩片天空網頁版](https://twoskies.web.app)

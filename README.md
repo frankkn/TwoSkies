@@ -15,7 +15,12 @@
 ### Android
 1. Download [app-twoskies.apk (latest)](https://github.com/frankkn/TwoSkies/releases/latest/download/app-twoskies.apk)
 2. On your phone, allow installs from unknown sources (Settings → Security)
-3. Open the downloaded APK to install, then sign in with Google
+3. Open the downloaded APK to install
+4. If Google Play Protect blocks the install ("unknown developer"), tap **More details**
+   → **Install anyway** — a routine hurdle for sideloaded apps, not a problem with the
+   APK. No such option? Temporarily turn off scanning under Play Store → profile →
+   Play Protect → settings, install, then turn it back on
+5. Open TwoSkies and sign in with Google
 
 ### iOS (Add to Home Screen)
 1. Open [https://twoskies.web.app](https://twoskies.web.app) in **Safari**
