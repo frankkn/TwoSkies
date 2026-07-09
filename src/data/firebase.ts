@@ -206,14 +206,19 @@ export class FirebaseProvider implements DataProvider {
 
   async saveProfile(input: ProfileInput) {
     const uid = this.requireUid()
-    await setDoc(doc(db, 'users', uid), {
-      nickname: input.nickname,
-      city: input.city,
-      lat: coarsen(input.lat),
-      lng: coarsen(input.lng),
-      tz: input.tz,
-      pairId: this.currentPairId,
-    })
+    // merge 且不碰 pairId：全量覆寫會把快照裡可能過時的 currentPairId 寫回去，
+    // 與進行中的配對寫入 race；pairId 只由配對流程與 lazy cleanup 動
+    await setDoc(
+      doc(db, 'users', uid),
+      {
+        nickname: input.nickname,
+        city: input.city,
+        lat: coarsen(input.lat),
+        lng: coarsen(input.lng),
+        tz: input.tz,
+      },
+      { merge: true },
+    )
   }
 
   async createInvite() {
