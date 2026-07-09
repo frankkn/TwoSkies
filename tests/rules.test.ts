@@ -177,6 +177,36 @@ describe('users 文件', () => {
   })
 })
 
+describe('users.pairId 指標防護（一人一配對不可繞過）', () => {
+  it('配對存續期間本人不能自清 pairId（清了就能建第二個配對）', async () => {
+    await seedPaired()
+    await assertFails(updateDoc(doc(db(ALICE), 'users', ALICE), { pairId: null }))
+  })
+
+  it('pair 已刪除後本人可清 pairId（lazy cleanup / unpair 的後續清理）', async () => {
+    await seedPaired()
+    await seed(async f => {
+      await deleteDoc(doc(f, 'pairs', PAIR))
+    })
+    await assertSucceeds(updateDoc(doc(db(ALICE), 'users', ALICE), { pairId: null }))
+  })
+
+  it('不能把 pairId 指到自己不在其中的 pair', async () => {
+    await seedPaired()
+    await seed(async f => {
+      await setDoc(doc(f, 'users', EVE), profile({ nickname: '小偷' }))
+    })
+    await assertFails(updateDoc(doc(db(EVE), 'users', EVE), { pairId: PAIR }))
+  })
+
+  it('不能把 pairId 指到不存在的 pair', async () => {
+    await seed(async f => {
+      await setDoc(doc(f, 'users', ALICE), profile())
+    })
+    await assertFails(updateDoc(doc(db(ALICE), 'users', ALICE), { pairId: 'ghost-pair' }))
+  })
+})
+
 describe('建立配對與邀請碼', () => {
   beforeEach(async () => {
     await seed(async f => {

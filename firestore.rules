@@ -44,24 +44,52 @@ service cloud.firestore {
       allow list: if false;
 
       // 只有本人能寫；欄位白名單＋值驗證（塞任意欄位＝暗通道聊天室）
-      allow create, update: if signedIn()
+      function validUserData() {
+        return request.resource.data.keys().hasOnly(['pairId', 'nickname', 'city', 'lat', 'lng', 'tz'])
+          && request.resource.data.nickname is string
+          && request.resource.data.nickname.size() >= 1
+          && request.resource.data.nickname.size() <= 20
+          && request.resource.data.city is string
+          && request.resource.data.city.size() >= 1
+          && request.resource.data.city.size() <= 50
+          && request.resource.data.tz is string
+          && request.resource.data.tz.size() >= 1
+          && request.resource.data.tz.size() <= 50
+          && isCoarse(request.resource.data.lat)
+          && request.resource.data.lat >= -90 && request.resource.data.lat <= 90
+          && isCoarse(request.resource.data.lng)
+          && request.resource.data.lng >= -180 && request.resource.data.lng <= 180;
+      }
+
+      // pairId 是指標，但不能亂指：指向的 pair 在這次寫入後必須存在、且自己在 members 裡
+      // （createInvite 的 batch／redeem 的 transaction 都在同一寫入裡動了 pair，getAfter 看得到）
+      function memberAfter(pid) {
+        return pid is string && pid.size() <= 128
+          && existsAfter(pairPath(pid))
+          && request.auth.uid in getAfter(pairPath(pid)).data.members;
+      }
+
+      function pairIdOf(data) {
+        return ('pairId' in data) ? data.pairId : null;
+      }
+
+      allow create: if signedIn()
         && request.auth.uid == uid
-        && request.resource.data.keys().hasOnly(['pairId', 'nickname', 'city', 'lat', 'lng', 'tz'])
-        && request.resource.data.nickname is string
-        && request.resource.data.nickname.size() >= 1
-        && request.resource.data.nickname.size() <= 20
-        && request.resource.data.city is string
-        && request.resource.data.city.size() >= 1
-        && request.resource.data.city.size() <= 50
-        && request.resource.data.tz is string
-        && request.resource.data.tz.size() >= 1
-        && request.resource.data.tz.size() <= 50
-        && isCoarse(request.resource.data.lat)
-        && request.resource.data.lat >= -90 && request.resource.data.lat <= 90
-        && isCoarse(request.resource.data.lng)
-        && request.resource.data.lng >= -180 && request.resource.data.lng <= 180
-        && (noPair(request.resource.data) ||
-            (request.resource.data.pairId is string && request.resource.data.pairId.size() <= 128));
+        && validUserData()
+        && (noPair(request.resource.data) || memberAfter(request.resource.data.pairId));
+
+      // pairId 的轉移受控：不變自由；清成 null 只有原 pair 已（或同一 batch 內被）刪除
+      // 才放行——否則本人可自清指標、再建第二個配對，繞過「一人同時只能在一個配對裡」
+      allow update: if signedIn()
+        && request.auth.uid == uid
+        && validUserData()
+        && (
+          pairIdOf(request.resource.data) == pairIdOf(resource.data)
+          || (
+            (pairIdOf(resource.data) == null || !existsAfter(pairPath(resource.data.pairId)))
+            && (noPair(request.resource.data) || memberAfter(request.resource.data.pairId))
+          )
+        );
 
       allow delete: if false;
     }
