@@ -1,5 +1,46 @@
+import { useEffect, useRef } from 'react'
 import type { WeatherBundle } from '../types'
 import { WeatherIcon } from './WeatherIcon'
+
+/** 桌機滑鼠按住拖曳橫捲（觸控裝置交給原生手勢） */
+function useDragScroll() {
+  const ref = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    let dragging = false
+    let startX = 0
+    let startLeft = 0
+
+    const down = (e: PointerEvent) => {
+      if (e.pointerType !== 'mouse') return
+      dragging = true
+      startX = e.clientX
+      startLeft = el.scrollLeft
+      el.setPointerCapture(e.pointerId)
+    }
+    const move = (e: PointerEvent) => {
+      if (!dragging) return
+      el.scrollLeft = startLeft - (e.clientX - startX)
+    }
+    const up = (e: PointerEvent) => {
+      dragging = false
+      if (el.hasPointerCapture(e.pointerId)) el.releasePointerCapture(e.pointerId)
+    }
+
+    el.addEventListener('pointerdown', down)
+    el.addEventListener('pointermove', move)
+    el.addEventListener('pointerup', up)
+    el.addEventListener('pointercancel', up)
+    return () => {
+      el.removeEventListener('pointerdown', down)
+      el.removeEventListener('pointermove', move)
+      el.removeEventListener('pointerup', up)
+      el.removeEventListener('pointercancel', up)
+    }
+  }, [])
+  return ref
+}
 
 function weekdayLabel(date: string, index: number): string {
   if (index === 0) return '今天'
@@ -12,11 +53,15 @@ function weekdayLabel(date: string, index: number): string {
 /** 常駐在天空上的預報：只有溫度和雨，直接顯示、不需點擊。
  *  區塊限寬靠左——寬螢幕不撐滿，右半邊留給天空 */
 export function ForecastBlock({ bundle }: { bundle: WeatherBundle }) {
+  const hourlyRef = useDragScroll()
   return (
     <div className="flex w-full max-w-sm flex-col gap-3">
       {/* 未來 24 小時：畫面固定 6 格，其餘橫向捲動（右緣漸淡提示）；0% 也顯示 */}
       {/* 右緣內容淡出提示可捲——用 mask 透出天空，亮暗底都好看 */}
-      <div className="flex snap-x overflow-x-auto pb-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [mask-image:linear-gradient(to_left,transparent,black_2.5rem)]">
+      <div
+        ref={hourlyRef}
+        className="flex cursor-grab snap-x select-none overflow-x-auto pb-0.5 active:cursor-grabbing [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [mask-image:linear-gradient(to_left,transparent,black_2.5rem)]"
+      >
         {bundle.hourly.map((h, i) => (
           <div
             key={`${h.hour}-${i}`}
