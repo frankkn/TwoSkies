@@ -70,7 +70,9 @@ export function SkyPane({ profile, weather, showLocalTime, visitedBy, onSettings
 
         <footer className="mt-3 flex shrink-0 items-end justify-between gap-4">
           {visitedBy ? (
-            <p className="text-sm text-white/60">{visitedBy}來看過你的天空了</p>
+            <p className="rounded-full bg-slate-900/25 px-4 py-2 text-sm text-white/70 backdrop-blur-md">
+              {visitedBy}來看過你的天空了
+            </p>
           ) : (
             <span />
           )}
