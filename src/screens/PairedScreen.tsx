@@ -113,13 +113,22 @@ export function PairedScreen({ me, partner, pairId }: Props) {
     <main className="flex h-dvh flex-col">
       {viewMode === 'split' ? (
         <>
-          <SkyPane profile={partner} weather={partnerWeather} showLocalTime safeArea="top" ritual={checkin} />
+          {/* 同框＝半屏高度：預報用緊湊密度，滿版寬鬆留給 focus/solo 的全螢幕單片 */}
+          <SkyPane
+            profile={partner}
+            weather={partnerWeather}
+            showLocalTime
+            safeArea="top"
+            ritual={checkin}
+            forecastDensity="compact"
+          />
           <SkyPane
             profile={me}
             weather={myWeather}
             ritual={visitedMark}
             onSettingsClick={() => setShowSettings(true)}
             safeArea="bottom"
+            forecastDensity="compact"
           />
         </>
       ) : focused === 'partner' ? (

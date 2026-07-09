@@ -13,6 +13,8 @@ interface Props {
   ritual?: ReactNode
   /** 有值就在稱呼右側顯示齒輪設定入口 */
   onSettingsClick?: () => void
+  /** 預報密度：全螢幕單片＝cozy（預設）、兩片同框＝compact */
+  forecastDensity?: 'cozy' | 'compact'
   /**
    * 這片天空貼著螢幕的哪些邊：貼邊處的留白要加上系統列的 safe-area inset，
    * 否則 edge-to-edge 下打卡膠囊/邀請碼動作會沉到 Android 導覽列後面。
@@ -22,7 +24,7 @@ interface Props {
   children?: ReactNode
 }
 
-export function SkyPane({ profile, weather, showLocalTime, ritual, onSettingsClick, safeArea = 'both', children }: Props) {
+export function SkyPane({ profile, weather, showLocalTime, ritual, onSettingsClick, forecastDensity, safeArea = 'both', children }: Props) {
   const now = useNow(profile.tz)
   const bundle = weather.status === 'ok' ? weather.weather : null
   const safeTop = safeArea !== 'bottom'
@@ -84,7 +86,7 @@ export function SkyPane({ profile, weather, showLocalTime, ritual, onSettingsCli
         {/* 預報緊貼資訊區下方；七天列吃滿剩餘高度（放得下就全展開） */}
         {bundle ? (
           <div className="mt-4 min-h-0 flex-1 overflow-hidden">
-            <ForecastBlock bundle={bundle} lat={profile.lat} lng={profile.lng} />
+            <ForecastBlock bundle={bundle} lat={profile.lat} lng={profile.lng} density={forecastDensity} />
           </div>
         ) : (
           <div className="flex-1" />

@@ -17,7 +17,7 @@ export async function fetchWeather(lat: number, lng: number): Promise<WeatherBun
     `?latitude=${lat}&longitude=${lng}` +
     `&current=temperature_2m,weather_code,is_day` +
     `&hourly=temperature_2m,precipitation_probability,weather_code,is_day&forecast_hours=24` +
-    `&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&forecast_days=7` +
+    `&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&forecast_days=10` +
     `&timezone=auto`
   const res = await fetch(url)
   if (!res.ok) throw new Error(`open-meteo ${res.status}`)

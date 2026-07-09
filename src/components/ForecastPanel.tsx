@@ -124,11 +124,18 @@ interface Props {
   bundle: WeatherBundle
   lat: number
   lng: number
+  /**
+   * cozy＝全螢幕單片天空（focus/solo/pending）：iPhone 式寬鬆密度，
+   * 字級行距放大、剩餘高度平均攤進行距，逐日列吃到畫面底；
+   * compact＝兩片同框：緊湊小字、卡片貼合內容、放不下捲動
+   */
+  density?: 'cozy' | 'compact'
 }
 
 /** 常駐在天空上的預報：只有溫度和雨，直接顯示、不需點擊。
  *  區塊限寬靠左——寬螢幕不撐滿，右半邊留給天空 */
-export function ForecastBlock({ bundle, lat, lng }: Props) {
+export function ForecastBlock({ bundle, lat, lng, density = 'cozy' }: Props) {
+  const cozy = density === 'cozy'
   const blockRef = useRef<HTMLDivElement>(null)
   const dailyRef = useDragScroll('y')
   const [expanded, setExpanded] = useState<string | null>(null)
@@ -195,31 +202,35 @@ export function ForecastBlock({ bundle, lat, lng }: Props) {
     // 磨砂卡片（iPhone 天氣的做法）：天空再淺，預報都讀得清楚；透明度低，天空仍透得出來
     <div
       ref={blockRef}
-      className="flex max-h-full min-h-0 w-full max-w-[40rem] flex-col gap-3 rounded-2xl bg-slate-900/20 p-4 backdrop-blur-sm"
+      className={`flex min-h-0 w-full max-w-[40rem] flex-col gap-3 rounded-2xl bg-slate-900/20 p-4 backdrop-blur-sm ${
+        cozy ? 'h-full' : 'max-h-full'
+      }`}
     >
       <HourStrip hours={bundle.hourly} cols={cols} nowLabel />
 
       <hr className="shrink-0 border-white/20" />
 
-      {/* 七天列：放得下就全展開、卡片貼合內容高（留白讓給卡片下方的天空——
-          「天空在下半部呼吸」）；放不下由 max-h 封頂、往下拖曳看（可捲時底緣淡出）。
+      {/* 逐日列：cozy＝ul 吃滿剩餘高度、每行 grow 平分（任何螢幕都貼近滿版，
+          放不下時行高退回內容高並捲動）；compact＝貼合內容、留白讓給卡片下的天空。
           極矮視窗至少保底兩行 */}
       <ul
         ref={dailyRef}
-        className={`flex min-h-14 cursor-grab select-none flex-col gap-1.5 overflow-y-auto active:cursor-grabbing [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${
-          listOverflows ? '[mask-image:linear-gradient(to_top,transparent,black_1.5rem)]' : ''
-        }`}
+        className={`flex min-h-14 cursor-grab select-none flex-col overflow-y-auto active:cursor-grabbing [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${
+          cozy ? 'flex-1 gap-2' : 'gap-1.5'
+        } ${listOverflows ? '[mask-image:linear-gradient(to_top,transparent,black_1.5rem)]' : ''}`}
       >
         {bundle.daily.map((d, i) => {
           const detail = dayHours[d.date]
           const left = pos(d.low)
           const width = Math.max(4, pos(d.high) - left)
           return (
-            <li key={d.date}>
+            <li key={d.date} className={cozy ? 'flex grow flex-col' : undefined}>
               {/* iPhone 式：星期｜圖示｜雨%｜低溫｜溫度範圍條｜高溫，佔滿區塊寬度 */}
               <button
                 type="button"
-                className="flex w-full items-center gap-3 text-sm leading-none"
+                className={`flex w-full items-center gap-3 leading-none ${
+                  cozy ? 'min-h-10 flex-1 text-base' : 'text-sm'
+                }`}
                 onClick={e => {
                   void toggleDay(d.date)
                   const row = e.currentTarget
@@ -230,10 +241,14 @@ export function ForecastBlock({ bundle, lat, lng }: Props) {
                 <span style={{ width: colPx }} className="shrink-0 text-center opacity-80">
                   {weekdayLabel(d.date, i)}
                 </span>
-                <WeatherIcon kind={d.kind} size={17} />
-                <span className="w-9 text-center text-xs opacity-60">{d.precipProb}%</span>
-                <span className="w-7 text-right opacity-55">{d.low}°</span>
-                <span className="relative h-1 min-w-8 flex-1 rounded-full bg-white/25">
+                <WeatherIcon kind={d.kind} size={cozy ? 20 : 17} />
+                <span className={`text-center opacity-60 ${cozy ? 'w-11 text-sm' : 'w-9 text-xs'}`}>
+                  {d.precipProb}%
+                </span>
+                <span className={`text-right opacity-55 ${cozy ? 'w-9' : 'w-7'}`}>{d.low}°</span>
+                <span
+                  className={`relative min-w-8 flex-1 rounded-full bg-white/25 ${cozy ? 'h-1.5' : 'h-1'}`}
+                >
                   {/* 亮色片段＝這天的低～高溫落在週尺上的位置；片段裁切一條
                       橫跨整週尺的冷暖漸層，冷端偏青、熱端偏橘 */}
                   <span
