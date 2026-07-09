@@ -1,0 +1,176 @@
+rules_version = '2';
+
+// TwoSkies Security Rules — client-only 架構下這是唯一防線，
+// 每一條都是產品哲學的兌現（見 CLAUDE.md）。改動必須先過 emulator 測試。
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function userPath(uid) {
+      return /databases/$(database)/documents/users/$(uid);
+    }
+
+    function pairPath(pairId) {
+      return /databases/$(database)/documents/pairs/$(pairId);
+    }
+
+    function invitePath(code) {
+      return /databases/$(database)/documents/invites/$(code);
+    }
+
+    // 「粗化到 0.1°」是基礎設施承諾：數學驗證，容忍浮點誤差
+    function isCoarse(v) {
+      return v is number && math.abs(v * 10 - math.round(v * 10)) < 0.0001;
+    }
+
+    function noPair(data) {
+      return !('pairId' in data) || data.pairId == null;
+    }
+
+    match /users/{uid} {
+      // 本人可讀；配對成員可讀對方——成員判定以 pair.members 為 source of truth
+      allow get: if signedIn() && (
+        request.auth.uid == uid ||
+        (
+          resource.data.pairId is string &&
+          exists(pairPath(resource.data.pairId)) &&
+          request.auth.uid in get(pairPath(resource.data.pairId)).data.members &&
+          uid in get(pairPath(resource.data.pairId)).data.members
+        )
+      );
+      allow list: if false;
+
+      // 只有本人能寫；欄位白名單＋值驗證（塞任意欄位＝暗通道聊天室）
+      allow create, update: if signedIn()
+        && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['pairId', 'nickname', 'city', 'lat', 'lng', 'tz'])
+        && request.resource.data.nickname is string
+        && request.resource.data.nickname.size() >= 1
+        && request.resource.data.nickname.size() <= 20
+        && request.resource.data.city is string
+        && request.resource.data.city.size() >= 1
+        && request.resource.data.city.size() <= 50
+        && request.resource.data.tz is string
+        && request.resource.data.tz.size() >= 1
+        && request.resource.data.tz.size() <= 50
+        && isCoarse(request.resource.data.lat)
+        && request.resource.data.lat >= -90 && request.resource.data.lat <= 90
+        && isCoarse(request.resource.data.lng)
+        && request.resource.data.lng >= -180 && request.resource.data.lng <= 180
+        && (noPair(request.resource.data) ||
+            (request.resource.data.pairId is string && request.resource.data.pairId.size() <= 128));
+
+      allow delete: if false;
+    }
+
+    match /pairs/{pairId} {
+      allow get: if signedIn() && request.auth.uid in resource.data.members;
+      allow list: if false;
+
+      // 建立：members == [自己]，且同一 batch 把自己的 users.pairId 從無變成此 pair
+      // ——「一人同時只能在一個配對裡」由 rules 強制
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(['members', 'inviteCode', 'createdAt'])
+        && request.resource.data.members == [request.auth.uid]
+        && request.resource.data.inviteCode is string
+        && request.resource.data.inviteCode.size() >= 8
+        && request.resource.data.inviteCode.size() <= 64
+        && request.resource.data.createdAt == request.time
+        && noPair(get(userPath(request.auth.uid)).data)
+        && getAfter(userPath(request.auth.uid)).data.pairId == pairId;
+
+      // 兌換：唯一允許的轉移 1→2；原成員不變、新成員是自己、不可自兌換、
+      // 其他欄位不可變；invite 必須有效且在同一 transaction 裡被刪掉
+      allow update: if signedIn()
+        && request.resource.data.keys().hasOnly(['members', 'inviteCode', 'createdAt'])
+        && resource.data.members.size() == 1
+        && request.resource.data.members.size() == 2
+        && request.resource.data.members[0] == resource.data.members[0]
+        && request.resource.data.members[1] == request.auth.uid
+        && request.auth.uid != resource.data.members[0]
+        && request.resource.data.inviteCode == resource.data.inviteCode
+        && request.resource.data.createdAt == resource.data.createdAt
+        && get(invitePath(resource.data.inviteCode)).data.pairId == pairId
+        && request.time < get(invitePath(resource.data.inviteCode)).data.expiresAt
+        && !existsAfter(invitePath(resource.data.inviteCode))
+        && noPair(get(userPath(request.auth.uid)).data)
+        && getAfter(userPath(request.auth.uid)).data.pairId == pairId;
+
+      // 解除配對的關鍵動作：成員可刪，單筆原子
+      allow delete: if signedIn() && request.auth.uid in resource.data.members;
+
+      match /checkins/{checkinId} {
+        function pair() {
+          return get(pairPath(pairId)).data;
+        }
+
+        // dateKey 由打卡者本地時區計算，rules 算不了時區日期——
+        // 只驗格式＋與 request.time 相差 ≤ 48h（涵蓋 UTC±14）；
+        // 「一天一次」實際由文件 ID 唯一性 + create-only 保證
+        function dateKeyNearNow(dk) {
+          let d = timestamp.date(
+            int(dk.split('-')[0]),
+            int(dk.split('-')[1]),
+            int(dk.split('-')[2])
+          );
+          return math.abs(d.toMillis() - request.time.toMillis()) <= 172800000;
+        }
+
+        allow get: if signedIn() && request.auth.uid in pair().members;
+        allow list: if false;
+
+        allow create: if signedIn()
+          && request.auth.uid in pair().members
+          && pair().members.size() == 2
+          && checkinId.split('_').size() == 2
+          && checkinId.split('_')[1] == request.auth.uid
+          && checkinId.split('_')[0].matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+          && dateKeyNearNow(checkinId.split('_')[0])
+          && request.resource.data.keys().hasOnly(['at', 'expireAt'])
+          && request.resource.data.at == request.time
+          // expireAt ≈ at + 48h：client 算不出 server time，容忍 ±10 分鐘時鐘偏差；TTL 是兜底
+          && request.resource.data.expireAt is timestamp
+          && request.resource.data.expireAt.toMillis() >= request.time.toMillis() + 172200000
+          && request.resource.data.expireAt.toMillis() <= request.time.toMillis() + 173400000;
+
+        // 點了收不回：配對存續期間絕對刪不掉；pair 已刪才放行（孤兒清理，TTL 兜底）
+        allow update: if false;
+        allow delete: if signedIn() && !exists(pairPath(pairId));
+      }
+    }
+
+    match /invites/{code} {
+      // 知道 code 就能讀（拿 inviterNickname 顯示「阿寶邀請你」）；禁止 list 防枚舉
+      allow get: if signedIn();
+      allow list: if false;
+
+      // expiresAt 上限由 rules 封頂，否則 client 可設 100 年後、TTL 形同虛設。
+      // pair 與 invite 同一 batch 建立，所以用 getAfter 驗「自己是該 pair 唯一成員」
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(['pairId', 'createdBy', 'inviterNickname', 'expiresAt'])
+        && request.resource.data.createdBy == request.auth.uid
+        && request.resource.data.inviterNickname is string
+        && request.resource.data.inviterNickname.size() >= 1
+        && request.resource.data.inviterNickname.size() <= 20
+        && request.resource.data.pairId is string
+        && getAfter(pairPath(request.resource.data.pairId)).data.members == [request.auth.uid]
+        && request.resource.data.expiresAt is timestamp
+        && request.resource.data.expiresAt > request.time
+        && request.resource.data.expiresAt <= request.time + duration.value(24, 'h');
+
+      allow update: if false;
+
+      // 建立者可刪（取消邀請）；兌換者在 join transaction 裡刪（getAfter 驗自己已入 members）
+      allow delete: if signedIn() && (
+        resource.data.createdBy == request.auth.uid ||
+        (
+          existsAfter(pairPath(resource.data.pairId)) &&
+          request.auth.uid in getAfter(pairPath(resource.data.pairId)).data.members
+        )
+      );
+    }
+  }
+}
