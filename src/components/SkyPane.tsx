@@ -47,9 +47,14 @@ export function SkyPane({ profile, weather, showLocalTime, visitedBy, onSettings
           <p className="text-4xl font-extralight">{bundle ? `${bundle.now.temperature}°` : '–'}</p>
         </header>
 
-        <div className="flex-1" />
+        {/* 預報緊貼資訊區下方；留白在區塊之下，天空在下半部呼吸 */}
+        {bundle && (
+          <div className="mt-4">
+            <ForecastBlock bundle={bundle} lat={profile.lat} lng={profile.lng} />
+          </div>
+        )}
 
-        {bundle && <ForecastBlock bundle={bundle} lat={profile.lat} lng={profile.lng} />}
+        <div className="flex-1" />
 
         <footer className="mt-3 flex items-end justify-between gap-4">
           {visitedBy ? (

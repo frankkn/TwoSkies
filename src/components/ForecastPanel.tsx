@@ -149,6 +149,12 @@ export function ForecastBlock({ bundle, lat, lng }: Props) {
     }
   }
 
+  // 溫度範圍條的「週尺」：整週最低～最高溫，七行共用同一把尺才能直向比較
+  const weekMin = Math.min(...bundle.daily.map(d => d.low))
+  const weekMax = Math.max(...bundle.daily.map(d => d.high))
+  const weekRange = Math.max(1, weekMax - weekMin)
+  const pos = (t: number) => Math.min(100, Math.max(0, ((t - weekMin) / weekRange) * 100))
+
   return (
     <div className="flex w-full max-w-[40rem] flex-col gap-3">
       <HourStrip hours={bundle.hourly} nowLabel />
@@ -164,12 +170,14 @@ export function ForecastBlock({ bundle, lat, lng }: Props) {
       >
         {bundle.daily.map((d, i) => {
           const detail = dayHours[d.date]
+          const left = pos(d.low)
+          const width = Math.max(4, pos(d.high) - left)
           return (
             <li key={d.date}>
-              {/* 四欄均分佔滿區塊寬度，左右邊緣與上方逐時列切齊 */}
+              {/* iPhone 式：星期｜圖示｜雨%｜低溫｜溫度範圍條｜高溫，佔滿區塊寬度 */}
               <button
                 type="button"
-                className="flex w-full items-center justify-between text-sm leading-none"
+                className="flex w-full items-center gap-3 text-sm leading-none"
                 onClick={e => {
                   void toggleDay(d.date)
                   const row = e.currentTarget
@@ -178,12 +186,29 @@ export function ForecastBlock({ bundle, lat, lng }: Props) {
               >
                 <span className="w-9 text-left opacity-80">{weekdayLabel(d.date, i)}</span>
                 <WeatherIcon kind={d.kind} size={17} />
-                <span className="w-10 text-center text-xs opacity-60">{d.precipProb}%</span>
-                <span className="w-20 text-right">
-                  <span className="opacity-55">{d.low}°</span>
-                  <span className="mx-1 opacity-40">—</span>
-                  {d.high}°
+                <span className="w-9 text-center text-xs opacity-60">{d.precipProb}%</span>
+                <span className="w-7 text-right opacity-55">{d.low}°</span>
+                <span className="relative h-1 min-w-8 flex-1 rounded-full bg-white/25">
+                  {/* 亮色片段＝這天的低～高溫落在週尺上的位置；片段裁切一條
+                      橫跨整週尺的冷暖漸層，冷端偏青、熱端偏橘 */}
+                  <span
+                    className="absolute inset-y-0 overflow-hidden rounded-full"
+                    style={{ left: `${left}%`, width: `${width}%` }}
+                  >
+                    <span
+                      className="block h-full bg-linear-to-r from-cyan-300 via-amber-200 to-orange-400"
+                      style={{ width: `${10000 / width}%`, marginLeft: `-${(left / width) * 100}%` }}
+                    />
+                  </span>
+                  {/* 今天那行：現在溫度的小白點 */}
+                  {i === 0 && (
+                    <span
+                      className="absolute top-1/2 size-[7px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-white shadow-[0_0_0_1.5px_rgba(15,23,42,0.4)]"
+                      style={{ left: `${pos(bundle.now.temperature)}%` }}
+                    />
+                  )}
                 </span>
+                <span className="w-8 text-right">{d.high}°</span>
               </button>
               {expanded === d.date && (
                 <div className="mt-1.5 mb-1">
