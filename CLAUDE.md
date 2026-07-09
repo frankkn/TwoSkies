@@ -152,11 +152,17 @@
   誠實提醒：TTL 清理有最多約 24h 的延遲，「48 小時」實際可能到三天——
   所以顯示層一律以 dateKey 過濾（過期文件即使殘留也永不渲染），
   儲存層最終刪除：雙層兌現「不留歷史」
-- 啟用 Firebase App Check（reCAPTCHA v3）並對 Firestore enforce——config 是公開的、
-  rules 只管「能不能」管不了「多頻繁」，App Check 是無後端架構的標準補償控制。
-  邀請碼用分享連結傳遞（code 放 URL fragment），熵和 UX 兼得。
-  **現況（2026-07）：尚未啟用**。啟用時必須同時處理兩個平台——web 用 reCAPTCHA v3、
-  Android 用 Play Integrity——只 enforce 其一，另一個平台的 Firestore 會全斷
+- 邀請碼用分享連結傳遞（code 放 URL fragment），熵和 UX 兼得
+- **App Check：刻意永久停在監控模式（UNENFORCED），這是決定，不是未完成**（2026-07 拍板）。
+  原因：Android 側 Play Integrity 必須有 Play Console 開發者帳號（US$25）＋整套登記流程，
+  對兩人 app 邊際收益趨近零——rules 已擋掉所有越權讀寫，被 rules 拒絕的請求也幾乎不耗配額。
+  web 的 reCAPTCHA 已在 console 註冊但 client 從未帶 site key（送不出 token），維持現狀即可。
+  **紅線：console「APIs」分頁的兩個 enforce 開關（firestore、identitytoolkit）都不可按**——
+  按下即 web 與 APK 同時全斷（enforce 以服務為單位，沒有只管單一平台的選項）。
+  若未來翻案要 enforce，前置條件缺一不可：Play Console 帳號＋Android 註冊 Play Integrity
+  （側載 app 必須在進階設定放寬 PLAY_RECOGNIZED／LICENSED）＋web site key 佈進
+  .env.local 與兩條 workflow＋原生殼接 @capacitor-firebase/app-check＋
+  先在監控模式看到兩平台 verified 都接近 100%
 - Rules 要有 emulator 測試（@firebase/rules-unit-testing），至少涵蓋：
   非成員讀取拒絕、checkin 一天一次（ID 重複拒絕）、不可 update checkin、
   pair 存續期間刪 checkin 拒絕／pair 不存在後放行、外人不能兌換已用邀請碼、
@@ -208,7 +214,7 @@
 3. ✅ 部署 Firebase Hosting（https://twoskies.web.app）
 4. ✅ Android APK（Capacitor + 原生 Google 登入 + tag 自動發佈，v1.0.0 起）
 
-未完成的規格債：App Check（見架構節的現況註記）
+App Check 已拍板停在監控模式、不 enforce（見架構節，含翻案的前置條件）——沒有未完成的規格債
 
 ## 給 Claude 的開發準則
 - 任何功能實作前先問：這會不會製造義務感或焦慮？會就不做
