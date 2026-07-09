@@ -71,7 +71,7 @@ export function PairedScreen({ me, partner, pairId }: Props) {
     </button>
   )
 
-  // 打卡語意歸位：「我來看過你的天空了」發生在看對方天空時——掛在對方那片的 footer
+  // 打卡語意歸位：「我來看過你的天空了」發生在看對方天空時——放對方那片的名字下方
   const checkin = (
     <CheckinButton
       checked={iCame}
@@ -81,6 +81,12 @@ export function PairedScreen({ me, partner, pairId }: Props) {
     />
   )
   const visitedBy = partnerCame ? partner.nickname : null
+  // 來訪標記在自己那片的名字下方；沒來就什麼都沒有——留白是誠實
+  const visitedMark = visitedBy ? (
+    <p className="rounded-full bg-slate-900/25 px-4 py-2 text-sm text-white/70 backdrop-blur-md">
+      {visitedBy}來看過你的天空了
+    </p>
+  ) : undefined
 
   // 檢視模式是裝置偏好（localStorage），收在設定裡；當前值亮一點
   const viewModeSection = (
@@ -107,13 +113,11 @@ export function PairedScreen({ me, partner, pairId }: Props) {
     <main className="flex h-dvh flex-col">
       {viewMode === 'split' ? (
         <>
-          <SkyPane profile={partner} weather={partnerWeather} showLocalTime safeArea="top">
-            {checkin}
-          </SkyPane>
+          <SkyPane profile={partner} weather={partnerWeather} showLocalTime safeArea="top" ritual={checkin} />
           <SkyPane
             profile={me}
             weather={myWeather}
-            visitedBy={visitedBy}
+            ritual={visitedMark}
             onSettingsClick={() => setShowSettings(true)}
             safeArea="bottom"
           />
@@ -128,10 +132,9 @@ export function PairedScreen({ me, partner, pairId }: Props) {
             weather={partnerWeather}
             showLocalTime
             safeArea="top"
+            ritual={checkin}
             onSettingsClick={() => setShowSettings(true)}
-          >
-            {checkin}
-          </SkyPane>
+          />
           <HorizonStrip
             position="bottom"
             profile={me}
@@ -153,7 +156,7 @@ export function PairedScreen({ me, partner, pairId }: Props) {
             key={me.uid}
             profile={me}
             weather={myWeather}
-            visitedBy={visitedBy}
+            ritual={visitedMark}
             safeArea="bottom"
             onSettingsClick={() => setShowSettings(true)}
           />

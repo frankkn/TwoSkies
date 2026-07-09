@@ -37,7 +37,8 @@ export function HorizonStrip({ profile, weather, showLocalTime, visitedBy, posit
       {/* 淡 scrim：晴日/雪日的亮底上白字才讀得清 */}
       <div className="absolute inset-0 bg-slate-900/15" />
 
-      <div className="relative flex h-14 items-center gap-3 px-5 text-sm text-white [text-shadow:0_1px_10px_rgba(0,0,0,0.35)] sm:px-8">
+      {/* h-20：條要夠高，SkyScene 的月亮/太陽才不會被攔腰裁切 */}
+      <div className="relative flex h-20 items-center gap-3 px-5 text-sm text-white [text-shadow:0_1px_10px_rgba(0,0,0,0.35)] sm:px-8">
         <span aria-hidden className="shrink-0">
           {sky ? (sky.isDay ? '☀️' : '🌙') : '☁️'}
         </span>

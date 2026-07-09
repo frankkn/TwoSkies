@@ -9,9 +9,9 @@ interface Props {
   weather: WeatherStatus
   /** 對方那片天空顯示當地時間 */
   showLocalTime?: boolean
-  /** 對方今天來看過：淺淺一句話；null 就什麼都沒有——留白是誠實 */
-  visitedBy?: string | null
-  /** 有值就在左上資訊區下方顯示齒輪設定入口 */
+  /** 名字/城市下方的儀式行：對方那片＝打卡按鈕、自己那片＝來訪標記；沒有就留白 */
+  ritual?: ReactNode
+  /** 有值就在稱呼右側顯示齒輪設定入口 */
   onSettingsClick?: () => void
   /**
    * 這片天空貼著螢幕的哪些邊：貼邊處的留白要加上系統列的 safe-area inset，
@@ -22,7 +22,7 @@ interface Props {
   children?: ReactNode
 }
 
-export function SkyPane({ profile, weather, showLocalTime, visitedBy, onSettingsClick, safeArea = 'both', children }: Props) {
+export function SkyPane({ profile, weather, showLocalTime, ritual, onSettingsClick, safeArea = 'both', children }: Props) {
   const now = useNow(profile.tz)
   const bundle = weather.status === 'ok' ? weather.weather : null
   const safeTop = safeArea !== 'bottom'
@@ -43,24 +43,27 @@ export function SkyPane({ profile, weather, showLocalTime, visitedBy, onSettings
         }`}
       >
         <header className="flex items-start justify-between">
-          <div className="flex flex-col items-start gap-1">
-            <div>
-              <h2 className="text-lg font-medium">{profile.nickname}</h2>
+          <div className="flex min-w-0 flex-col items-start gap-2">
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                <h2 className="truncate text-lg font-medium">{profile.nickname}</h2>
+                {onSettingsClick && (
+                  <button
+                    type="button"
+                    aria-label="設定"
+                    className="shrink-0 p-1 text-white/55 transition-colors hover:text-white"
+                    onClick={onSettingsClick}
+                  >
+                    <GearIcon />
+                  </button>
+                )}
+              </div>
               <p className="text-sm opacity-75">
                 {profile.city}
                 {showLocalTime && ` · ${now}`}
               </p>
             </div>
-            {onSettingsClick && (
-              <button
-                type="button"
-                aria-label="設定"
-                className="-ml-1 mt-1 p-1 text-white/55 transition-colors hover:text-white"
-                onClick={onSettingsClick}
-              >
-                <GearIcon />
-              </button>
-            )}
+            {ritual}
           </div>
           <div className="flex shrink-0 flex-col items-center">
             {/* 隱形 ° 當左側配重：置中以數字為視覺中心，度符號不把數字擠偏 */}
@@ -87,16 +90,8 @@ export function SkyPane({ profile, weather, showLocalTime, visitedBy, onSettings
           <div className="flex-1" />
         )}
 
-        <footer className="mt-3 flex shrink-0 items-end justify-between gap-4">
-          {visitedBy ? (
-            <p className="rounded-full bg-slate-900/25 px-4 py-2 text-sm text-white/70 backdrop-blur-md">
-              {visitedBy}來看過你的天空了
-            </p>
-          ) : (
-            <span />
-          )}
-          {children}
-        </footer>
+        {/* footer 只留給 pending 的邀請碼區；打卡/來訪標記已上移到名字下方（ritual） */}
+        {children && <footer className="mt-3 flex shrink-0 items-end justify-end gap-4">{children}</footer>}
       </div>
     </section>
   )

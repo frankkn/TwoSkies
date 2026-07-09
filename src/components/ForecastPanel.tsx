@@ -195,17 +195,18 @@ export function ForecastBlock({ bundle, lat, lng }: Props) {
     // 磨砂卡片（iPhone 天氣的做法）：天空再淺，預報都讀得清楚；透明度低，天空仍透得出來
     <div
       ref={blockRef}
-      className="flex h-full min-h-0 w-full max-w-[40rem] flex-col gap-3 rounded-2xl bg-slate-900/20 p-4 backdrop-blur-sm"
+      className="flex max-h-full min-h-0 w-full max-w-[40rem] flex-col gap-3 rounded-2xl bg-slate-900/20 p-4 backdrop-blur-sm"
     >
       <HourStrip hours={bundle.hourly} cols={cols} nowLabel />
 
       <hr className="shrink-0 border-white/20" />
 
-      {/* 七天列：吃滿可用高度，放得下就全展開；放不下往下拖曳看（可捲時底緣淡出）。
+      {/* 七天列：放得下就全展開、卡片貼合內容高（留白讓給卡片下方的天空——
+          「天空在下半部呼吸」）；放不下由 max-h 封頂、往下拖曳看（可捲時底緣淡出）。
           極矮視窗至少保底兩行 */}
       <ul
         ref={dailyRef}
-        className={`flex min-h-14 flex-1 cursor-grab select-none flex-col gap-1.5 overflow-y-auto active:cursor-grabbing [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${
+        className={`flex min-h-14 cursor-grab select-none flex-col gap-1.5 overflow-y-auto active:cursor-grabbing [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${
           listOverflows ? '[mask-image:linear-gradient(to_top,transparent,black_1.5rem)]' : ''
         }`}
       >
