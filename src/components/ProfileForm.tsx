@@ -28,18 +28,25 @@ export function ProfileForm({ initial, submitLabel, onSubmit }: Props) {
       setNoResults(false)
       return
     }
+    // stale 防護：先發的慢回應不能覆蓋後發的結果（debounce 降低機率但沒消除）
+    let stale = false
     const timer = setTimeout(() => {
       searchCities(query.trim())
         .then(r => {
+          if (stale) return
           setResults(r)
           setNoResults(r.length === 0)
         })
         .catch(() => {
+          if (stale) return
           setResults([])
           setNoResults(true)
         })
     }, 400)
-    return () => clearTimeout(timer)
+    return () => {
+      stale = true
+      clearTimeout(timer)
+    }
   }, [query])
 
   const canSubmit = nickname.trim().length >= 1 && city !== null && !busy
