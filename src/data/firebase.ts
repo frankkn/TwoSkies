@@ -272,6 +272,10 @@ export class FirebaseProvider implements DataProvider {
       })
     } catch (e) {
       if (e instanceof InviteError) throw e
+      // 網路類錯誤照實往上丟（UI 顯示「暫時連不上」）——
+      // 誤映射成「已被使用或已過期」會讓人把還有效的碼丟掉
+      const code = (e as { code?: string }).code
+      if (code === 'unavailable' || code === 'deadline-exceeded') throw e
       // rules 拒絕（已用/搶先/自兌換）統一映射
       throw new InviteError()
     }
