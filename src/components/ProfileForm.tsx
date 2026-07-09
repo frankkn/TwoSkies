@@ -18,16 +18,26 @@ export function ProfileForm({ initial, submitLabel, onSubmit }: Props) {
   )
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<CityResult[]>([])
+  const [noResults, setNoResults] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
 
   useEffect(() => {
     if (!query.trim()) {
       setResults([])
+      setNoResults(false)
       return
     }
     const timer = setTimeout(() => {
-      searchCities(query.trim()).then(setResults).catch(() => setResults([]))
+      searchCities(query.trim())
+        .then(r => {
+          setResults(r)
+          setNoResults(r.length === 0)
+        })
+        .catch(() => {
+          setResults([])
+          setNoResults(true)
+        })
     }, 400)
     return () => clearTimeout(timer)
   }, [query])
@@ -89,6 +99,11 @@ export function ProfileForm({ initial, submitLabel, onSubmit }: Props) {
               placeholder="搜尋城市…"
               onChange={e => setQuery(e.target.value)}
             />
+            {noResults && (
+              <p className="text-xs opacity-60">
+                找不到這個城市——試試完整名稱（台北市）或英文（Taipei）
+              </p>
+            )}
             {results.length > 0 && (
               <ul className="overflow-hidden rounded-lg border border-white/15 bg-white/5">
                 {results.map((r, i) => (

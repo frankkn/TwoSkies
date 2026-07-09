@@ -10,6 +10,17 @@ export interface CityResult {
 }
 
 export async function searchCities(query: string): Promise<CityResult[]> {
+  const first = await fetchGeo(query)
+  if (first.length > 0) return first
+  // CJK 查詢只認完整別名（實測：「台北」不中、「台北市」中、「東京」中）——
+  // 查無結果時自動補「市」重試，涵蓋台灣/中國/日本最常見的輸入習慣
+  if (/[぀-ヿ㐀-鿿]/.test(query) && !query.endsWith('市')) {
+    return fetchGeo(`${query}市`)
+  }
+  return []
+}
+
+async function fetchGeo(query: string): Promise<CityResult[]> {
   const url =
     `https://geocoding-api.open-meteo.com/v1/search` +
     `?name=${encodeURIComponent(query)}&count=5&language=zh`
