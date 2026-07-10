@@ -144,6 +144,13 @@ export function ForecastBlock({ bundle, lat, lng, density = 'cozy' }: Props) {
   const [cols, setCols] = useState(6)
   const [colPx, setColPx] = useState(HOUR_COL_PX)
   const [listOverflows, setListOverflows] = useState(false)
+  const fetchAbortRef = useRef<AbortController | null>(null)
+
+  // 城市變更時清快取並收回手風琴，避免展開後顯示舊城市的逐時資料
+  useEffect(() => {
+    setDayHours({})
+    setExpanded(null)
+  }, [lat, lng])
 
   // 區塊寬度 → 動態格數與欄寬（逐時列與七天列首尾格共用同一把尺）
   useEffect(() => {
@@ -160,15 +167,19 @@ export function ForecastBlock({ bundle, lat, lng, density = 'cozy' }: Props) {
     return () => observer.disconnect()
   }, [])
 
-  // 底緣淡出遮罩只在七天列真的有捲動空間時出現
+  // 底緣淡出遮罩只在七天列真的有捲動空間時出現，且捲到底時也要隱藏
   useEffect(() => {
     const el = dailyRef.current
     if (!el) return
-    const check = () => setListOverflows(el.scrollHeight > el.clientHeight + 1)
+    const check = () => setListOverflows(el.scrollHeight > el.clientHeight + el.scrollTop + 1)
     check()
+    el.addEventListener('scroll', check, { passive: true })
     const observer = new ResizeObserver(check)
     observer.observe(el)
-    return () => observer.disconnect()
+    return () => {
+      el.removeEventListener('scroll', check)
+      observer.disconnect()
+    }
   }, [dailyRef, expanded, dayHours])
 
   async function toggleDay(date: string) {
@@ -179,10 +190,15 @@ export function ForecastBlock({ bundle, lat, lng, density = 'cozy' }: Props) {
     setExpanded(date)
     if (dayHours[date]) return
     setDayHours(s => ({ ...s, [date]: 'loading' }))
+    // 取消前一個未完成的請求，避免城市切換後舊回應寫入快取
+    fetchAbortRef.current?.abort()
+    const controller = new AbortController()
+    fetchAbortRef.current = controller
     try {
-      const hours = await fetchDayHourly(lat, lng, date)
+      const hours = await fetchDayHourly(lat, lng, date, controller.signal)
       setDayHours(s => ({ ...s, [date]: hours }))
-    } catch {
+    } catch (err) {
+      if (err instanceof Error && err.name === 'AbortError') return
       // 抓不到就安靜收回，不報錯嚇人
       setDayHours(s => {
         const next = { ...s }

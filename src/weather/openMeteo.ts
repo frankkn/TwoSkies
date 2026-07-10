@@ -65,13 +65,13 @@ export async function fetchWeather(lat: number, lng: number): Promise<WeatherBun
 }
 
 /** 指定某一天（當地日期 YYYY-MM-DD）的完整 24 小時——七天列點開時現抓 */
-export async function fetchDayHourly(lat: number, lng: number, date: string): Promise<HourPoint[]> {
+export async function fetchDayHourly(lat: number, lng: number, date: string, signal?: AbortSignal): Promise<HourPoint[]> {
   const url =
     `https://api.open-meteo.com/v1/forecast` +
     `?latitude=${lat}&longitude=${lng}` +
     `&hourly=temperature_2m,precipitation_probability,weather_code,is_day` +
     `&start_date=${date}&end_date=${date}&timezone=auto`
-  const res = await fetch(url)
+  const res = await fetch(url, { signal })
   if (!res.ok) throw new Error(`open-meteo ${res.status}`)
   const json = await res.json()
   return ((json.hourly?.time ?? []) as string[]).map((t, i) => ({
