@@ -210,7 +210,7 @@
   既有安裝無法覆蓋升級，位置與備份提醒記在 session memory，不寫在公開 repo 裡。
   debug 與 release 兩把 SHA-1 都已註冊在 Firebase 的 Android app 上
 - `google-services.json` **有意進 repo**——與 web config 同理，都是公開值，防線在 rules
-- 發版儀式：`npm version X.Y.Z` + `git push --follow-tags`。同一個 v* tag 觸發兩條
+- 發版儀式：`npm version X.Y.Z -m "release: v%s"` + `git push --follow-tags`。同一個 v* tag 觸發兩條
   workflow：release.yml（簽章 APK → GitHub Releases，README 的 latest 連結自動跟上）、
   deploy-web.yml（部署 Hosting，也可 workflow_dispatch 單獨手動觸發）。
   版本號單一來源是 package.json（`__APP_VERSION__` 注入、設定面板顯示）；
