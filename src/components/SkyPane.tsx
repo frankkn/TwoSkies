@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import type { Profile, WeatherStatus } from '../types'
 import { useNow } from '../lib/time'
+import { getMoonPhase } from '../weather/moonPhase'
 import { ForecastBlock } from './ForecastPanel'
 import { SkyScene } from './SkyScene'
 
@@ -32,7 +33,7 @@ export function SkyPane({ profile, weather, showLocalTime, ritual, onSettingsCli
 
   return (
     <section className="relative flex-1 overflow-hidden">
-      <SkyScene sky={bundle?.now ?? null} error={weather.status === 'error'} />
+      <SkyScene sky={bundle?.now ?? null} moonPhase={getMoonPhase()} error={weather.status === 'error'} />
       <div
         className={`absolute inset-0 flex flex-col px-5 text-white [text-shadow:0_1px_10px_rgba(0,0,0,0.35)] sm:px-8 ${
           safeTop

@@ -25,7 +25,7 @@ const GRADIENTS: Record<WeatherKind, { day: string; night: string }> = {
   },
 }
 
-export function SkyScene({ sky, error }: { sky: WeatherNow | null; error?: boolean }) {
+export function SkyScene({ sky, error, moonPhase = 0.5 }: { sky: WeatherNow | null; error?: boolean; moonPhase?: number }) {
   if (!sky) {
     // 「雲層後面的天空」占位：抓不到天氣時不報錯嚇人
     return (
@@ -44,7 +44,7 @@ export function SkyScene({ sky, error }: { sky: WeatherNow | null; error?: boole
   return (
     <div className={`absolute inset-0 bg-linear-to-b ${GRADIENTS[kind][isDay ? 'day' : 'night']}`}>
       {!isDay && (kind === 'clear' || kind === 'cloudy') && <Stars faint={kind === 'cloudy'} />}
-      {kind === 'clear' && (isDay ? <Sun /> : <Moon />)}
+      {kind === 'clear' && (isDay ? <Sun /> : <Moon phase={moonPhase} />)}
       {kind !== 'clear' && <Clouds tone={isDay ? 'light' : 'dark'} />}
       {kind === 'rain' && <Rain />}
       {kind === 'snow' && <Snow />}
@@ -85,9 +85,46 @@ function Sun() {
   )
 }
 
-function Moon() {
+// SVG 弧線路徑：切出月相亮面（右半圓=上弦；左半圓=下弦；終結線橢圓決定眉月或凸月）
+function getMoonPath(phase: number, r: number): string | null {
+  if (phase < 0.01 || phase > 0.99) return null
+  const cx = r, cy = r
+  const top = `${cx} ${cy - r}`, bot = `${cx} ${cy + r}`
+  // tx = cos(phase×2π)×r：新月時=+r、弦月時=0、滿月時=-r
+  const tx = Math.cos(phase * 2 * Math.PI) * r
+  const atx = Math.abs(tx)
+  if (phase < 0.5) {
+    // 上弦：右半圓(sweep=1) + 終結線橢圓
+    // tx>0(眉月)→sweep=0(橢圓左彎，細右條)；tx<0(凸月)→sweep=1(右彎，左延伸)
+    const s2 = tx >= 0 ? 0 : 1
+    return `M ${top} A ${r} ${r} 0 0 1 ${bot} A ${atx} ${r} 0 0 ${s2} ${top} Z`
+  } else {
+    // 下弦：左半圓(sweep=0) + 終結線橢圓
+    // tx<0(凸月)→sweep=0(右延伸)；tx>0(眉月)→sweep=1(橢圓右彎，細左條)
+    const s2 = tx >= 0 ? 1 : 0
+    return `M ${top} A ${r} ${r} 0 0 0 ${bot} A ${atx} ${r} 0 0 ${s2} ${top} Z`
+  }
+}
+
+function Moon({ phase }: { phase: number }) {
+  const r = 24
+  const size = r * 2
+  // illum: 0=新月、1=滿月；月暈隨亮度縮放
+  const illum = 0.5 - 0.5 * Math.cos(phase * 2 * Math.PI)
+  const glowPx = 6 + illum * 20
+  const glowA = 0.1 + illum * 0.3
+  const path = getMoonPath(phase, r)
   return (
-    <div className="absolute top-4 left-1/2 h-12 w-12 -translate-x-1/2 rounded-full bg-slate-100/90 shadow-[0_0_28px_rgba(255,255,255,0.35)]" />
+    <div
+      className="absolute top-4 left-1/2 -translate-x-1/2"
+      style={{ filter: `drop-shadow(0 0 ${glowPx}px rgba(255,255,255,${glowA.toFixed(2)}))` }}
+    >
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-hidden>
+        {/* 暗碟：讓新月的月輪也隱約可見 */}
+        <circle cx={r} cy={r} r={r - 0.5} fill="rgba(15,23,42,0.55)" />
+        {path && <path d={path} fill="rgb(226,232,240)" />}
+      </svg>
+    </div>
   )
 }
 
