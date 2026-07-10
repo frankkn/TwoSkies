@@ -1,5 +1,6 @@
 import type { Profile, WeatherStatus } from '../types'
 import { useNow } from '../lib/time'
+import { getMoonPhase } from '../weather/moonPhase'
 import { SkyScene } from './SkyScene'
 
 interface Props {
@@ -33,7 +34,7 @@ export function HorizonStrip({ profile, weather, showLocalTime, visitedBy, posit
       }`}
     >
       {/* 天空本體延伸到系統列後面；不傳 error——56px 高不渲染占位文字，昏雲底就夠誠實 */}
-      <SkyScene sky={sky} />
+      <SkyScene sky={sky} moonPhase={getMoonPhase()} />
       {/* 淡 scrim：晴日/雪日的亮底上白字才讀得清 */}
       <div className="absolute inset-0 bg-slate-900/15" />
 
