@@ -2,7 +2,8 @@ import type { DayPoint, HourPoint, WeatherBundle, WeatherKind } from '../types'
 
 // WMO weather code → 四種天空
 // 0-1 晴、2-3 雲、45/48 霧（歸雲）、71-77/85-86 雪，其餘（毛毛雨、雨、雷雨）歸雨
-export function weatherKindFromWmo(code: number): WeatherKind {
+export function weatherKindFromWmo(code: number | null | undefined): WeatherKind {
+  if (code == null || !isFinite(code)) return 'cloudy' // 無資料時顯示雲，不造雨不造晴
   if (code <= 1) return 'clear'
   if (code <= 3 || code === 45 || code === 48) return 'cloudy'
   if ((code >= 71 && code <= 77) || code === 85 || code === 86) return 'snow'
@@ -36,7 +37,7 @@ export async function fetchWeather(lat: number, lng: number): Promise<WeatherBun
       hour: Number(t.slice(11, 13)),
       kind: weatherKindFromWmo(json.hourly.weather_code?.[i] ?? 0),
       isDay: (json.hourly.is_day?.[i] ?? 1) === 1,
-      temperature: Math.round(json.hourly.temperature_2m[i]),
+      temperature: Math.round(json.hourly.temperature_2m?.[i] ?? 0),
       precipProb: Math.round(json.hourly.precipitation_probability?.[i] ?? 0),
       gust: typeof gustRaw === 'number' ? Math.round(gustRaw) : undefined,
     }
@@ -50,9 +51,9 @@ export async function fetchWeather(lat: number, lng: number): Promise<WeatherBun
 
   const daily: DayPoint[] = ((json.daily?.time ?? []) as string[]).map((date, i) => ({
     date,
-    kind: weatherKindFromWmo(json.daily.weather_code[i]),
-    high: Math.round(json.daily.temperature_2m_max[i]),
-    low: Math.round(json.daily.temperature_2m_min[i]),
+    kind: weatherKindFromWmo(json.daily.weather_code?.[i]),
+    high: Math.round(json.daily.temperature_2m_max?.[i] ?? 0),
+    low: Math.round(json.daily.temperature_2m_min?.[i] ?? 0),
     precipProb: Math.round(json.daily.precipitation_probability_max?.[i] ?? 0),
   }))
 
@@ -77,7 +78,7 @@ export async function fetchDayHourly(lat: number, lng: number, date: string): Pr
     hour: Number(t.slice(11, 13)),
     kind: weatherKindFromWmo(json.hourly.weather_code?.[i] ?? 0),
     isDay: (json.hourly.is_day?.[i] ?? 1) === 1,
-    temperature: Math.round(json.hourly.temperature_2m[i]),
+    temperature: Math.round(json.hourly.temperature_2m?.[i] ?? 0),
     precipProb: Math.round(json.hourly.precipitation_probability?.[i] ?? 0),
   }))
 }
