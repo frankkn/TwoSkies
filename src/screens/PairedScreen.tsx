@@ -22,6 +22,7 @@ export function PairedScreen({ me, partner, pairId }: Props) {
   const online = useOnline()
   const [showSettings, setShowSettings] = useState(false)
   const [confirmUnpair, setConfirmUnpair] = useState(false)
+  const [unpairError, setUnpairError] = useState(false)
   const [busy, setBusy] = useState(false)
   const [viewMode, setViewMode] = useState<ViewMode>(() => readViewMode())
   const [focused, setFocused] = useState<'partner' | 'me'>('partner')
@@ -50,9 +51,12 @@ export function PairedScreen({ me, partner, pairId }: Props) {
           className="rounded-full border border-white/30 bg-white/10 px-4 py-1.5 text-sm disabled:opacity-40"
           onClick={async () => {
             setBusy(true)
+            setUnpairError(false)
             try {
               await provider.unpair()
               setShowSettings(false)
+            } catch {
+              setUnpairError(true)
             } finally {
               setBusy(false)
             }
@@ -60,10 +64,11 @@ export function PairedScreen({ me, partner, pairId }: Props) {
         >
           確定解除
         </button>
-        <button className="px-4 py-1.5 text-sm opacity-60 hover:opacity-90" onClick={() => setConfirmUnpair(false)}>
+        <button className="px-4 py-1.5 text-sm opacity-60 hover:opacity-90" onClick={() => { setConfirmUnpair(false); setUnpairError(false) }}>
           再想想
         </button>
       </div>
+      {unpairError && <p className="text-sm text-red-300">解除失敗，請檢查網路後再試</p>}
     </div>
   ) : (
     <button className="self-start text-sm opacity-60 hover:opacity-90" onClick={() => setConfirmUnpair(true)}>
@@ -197,6 +202,9 @@ function useCheckinId(tz: string, uid: string): string {
 
 function useCheckinExists(pairId: string, id: string): boolean {
   const [exists, setExists] = useState(false)
-  useEffect(() => provider.subscribeCheckin(pairId, id, setExists), [pairId, id])
+  useEffect(() => {
+    setExists(false) // 換訂閱前先重設，避免跨日時短暫顯示昨日的打卡狀態
+    return provider.subscribeCheckin(pairId, id, setExists)
+  }, [pairId, id])
   return exists
 }
