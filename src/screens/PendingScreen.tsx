@@ -13,6 +13,7 @@ export function PendingScreen({ me, inviteCode }: { me: Profile; inviteCode: str
   const [showSettings, setShowSettings] = useState(false)
   const [copied, setCopied] = useState<'link' | 'code' | null>(null)
   const [busy, setBusy] = useState(false)
+  const [cancelError, setCancelError] = useState(false)
   const copiedTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
 
   function copy(kind: 'link' | 'code', text: string) {
@@ -52,8 +53,13 @@ export function PendingScreen({ me, inviteCode }: { me: Profile; inviteCode: str
               disabled={busy}
               onClick={async () => {
                 setBusy(true)
+                setCancelError(false)
                 try {
                   await provider.cancelInvite()
+                } catch {
+                  // 對方同時兌換時 batch 會失敗；onSnapshot 會接手轉到 paired 狀態，
+                  // 但若純粹是網路問題則顯示提示
+                  setCancelError(true)
                 } finally {
                   setBusy(false)
                 }
@@ -62,6 +68,7 @@ export function PendingScreen({ me, inviteCode }: { me: Profile; inviteCode: str
               取消邀請
             </button>
           </div>
+          {cancelError && <p className="text-xs text-red-300">取消失敗，請檢查網路後再試</p>}
         </div>
       </SkyPane>
       {showSettings && <SettingsSheet me={me} onClose={() => setShowSettings(false)} />}
