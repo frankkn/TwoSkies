@@ -4,6 +4,5 @@
 export function getMoonPhase(): number {
   const knownNewMoon = 947182440000 // 2000-01-06T18:14:00Z in ms
   const lunarCycle = 29.530588853 * 24 * 60 * 60 * 1000
-  const phase = ((Date.now() - knownNewMoon) % lunarCycle) / lunarCycle
-  return phase < 0 ? phase + 1 : phase
+  return ((Date.now() - knownNewMoon) % lunarCycle) / lunarCycle
 }

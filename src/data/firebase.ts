@@ -65,9 +65,11 @@ export class FirebaseProvider implements DataProvider {
   private unsubUser?: () => void
   private unsubPair?: () => void
   private unsubPartner?: () => void
+  // onAuthStateChanged 的 unsubscribe 保留供測試隔離使用（生產環境是 singleton，不需呼叫）
+  readonly detachAuth: () => void
 
   constructor() {
-    onAuthStateChanged(auth, user => this.onAuth(user))
+    this.detachAuth = onAuthStateChanged(auth, user => this.onAuth(user))
   }
 
   // --- 訂閱鏈：auth → 自己 users → pair → 對方 users，上游變化下游統一 teardown ---

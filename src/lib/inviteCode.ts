@@ -13,6 +13,7 @@ export function inviteLink(code: string): string {
 }
 
 export function inviteCodeFromHash(hash: string): string | null {
-  const match = hash.match(/#invite=([a-z0-9]{8,64})/)
+  // 字元集與 ALPHABET 一致：排除 0/1/i/l/o 避免視覺混淆，同時給予明確的格式錯誤而非「已過期」
+  const match = hash.match(/#invite=([23456789abcdefghjkmnpqrstuvwxyz]{8,64})/)
   return match ? match[1] : null
 }
