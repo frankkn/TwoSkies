@@ -158,7 +158,11 @@ export class FirebaseProvider implements DataProvider {
     if (!data) {
       // pair 消失＝解除訊號：立即退訂（上面已 teardown）、lazy cleanup 自己的 pairId。
       // users onSnapshot 會接手轉到 pair-ended（對方解除）或 solo（自己解除）
-      if (!this.selfInitiated) localStorage.setItem(PAIR_ENDED_PREFIX + uid, '1')
+      // Safari 私密模式的 setItem 會 throw QuotaExceededError，需獨立 try/catch，
+      // 否則 updateDoc（清 pairId）被跳過，pair-ended 流程卡死
+      if (!this.selfInitiated) {
+        try { localStorage.setItem(PAIR_ENDED_PREFIX + uid, '1') } catch { /* 存不住就每次判斷雲端 */ }
+      }
       void updateDoc(doc(db, 'users', uid), { pairId: null }).catch(() => {})
       return
     }
